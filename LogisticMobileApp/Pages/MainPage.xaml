@@ -1,0 +1,32 @@
+﻿<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:helpers="clr-namespace:LogisticMobileApp.Helpers"
+             x:Class="LogisticMobileApp.Pages.MainPage"
+             Style="{StaticResource PageStyle}">
+    <ScrollView>
+        <StackLayout Padding="20" Spacing="20" VerticalOptions="Center">
+            <Label Text="{Binding [Login_Title], Source={x:Static helpers:LocalizationResourceManager.Instance}}" 
+                   FontSize="32" 
+                   FontAttributes="Bold" 
+                   HorizontalOptions="Center" />
+
+            <Entry Placeholder="{Binding [EmailPlaceholder], Source={x:Static helpers:LocalizationResourceManager.Instance}}" 
+                   Keyboard="Email" 
+                   Margin="0,10" />
+
+            <Entry Placeholder="{Binding [PasswordPlaceholder], Source={x:Static helpers:LocalizationResourceManager.Instance}}" 
+                   IsPassword="True" 
+                   Margin="0,10" />
+
+            <Button Text="{Binding [Login_Button], Source={x:Static helpers:LocalizationResourceManager.Instance}}" 
+                    Clicked="OnLoginClicked" />
+
+            <Label Text="{Binding [GoToRegisterLink], Source={x:Static helpers:LocalizationResourceManager.Instance}}" 
+                   Style="{StaticResource LinkLabelStyle}">
+                <Label.GestureRecognizers>
+                    <TapGestureRecognizer Command="{Binding GoToRegisterCommand}" />
+                </Label.GestureRecognizers>
+            </Label>
+        </StackLayout>
+    </ScrollView>
+</ContentPage>

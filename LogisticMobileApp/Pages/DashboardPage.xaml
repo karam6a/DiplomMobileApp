@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:helpers="clr-namespace:LogisticMobileApp.Helpers"
+             x:Class="LogisticMobileApp.Pages.DashboardPage"
+             Style="{StaticResource PageStyle}"
+             Title="{Binding [Dashboard_Title], Source={x:Static helpers:LocalizationResourceManager.Instance}}">
+
+    <ContentPage.ToolbarItems>
+        <ToolbarItem IconImageSource="logout_icon.png"
+                     Order="Primary"
+                     Priority="0"
+                     Clicked="OnLogoutClicked" />
+    </ContentPage.ToolbarItems>
+
+    <ScrollView>
+        <StackLayout Padding="20" Spacing="20" VerticalOptions="Center">
+
+            <Label Text="{Binding [Dashboard_Title], Source={x:Static helpers:LocalizationResourceManager.Instance}}"
+                   FontSize="32"
+                   FontAttributes="Bold"
+                   HorizontalOptions="Center" />
+
+            <Button Text="{Binding [Route_Button], Source={x:Static helpers:LocalizationResourceManager.Instance}}"
+                    Clicked="OnRouteClicked"
+                    Margin="0,10"/>
+
+            <Button Text="{Binding [Statistics_Button], Source={x:Static helpers:LocalizationResourceManager.Instance}}"
+                    Clicked="OnStatisticsClicked" />
+
+        </StackLayout>
+    </ScrollView>
+</ContentPage>

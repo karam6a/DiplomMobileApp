@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:helpers="clr-namespace:LogisticMobileApp.Helpers"
+             x:Class="LogisticMobileApp.Pages.PreferencesPage"
+             Title="{Binding [Settings_Title], Source={x:Static helpers:LocalizationResourceManager.Instance}}"
+             Style="{StaticResource PageStyle}">
+
+    <VerticalStackLayout Padding="16">
+
+        <!-- Панель с кнопками справа под верхней шапкой -->
+        <HorizontalStackLayout HorizontalOptions="End"
+                               Spacing="16"
+                               Margin="0,0,0,10">
+
+            <!-- Кнопка выбора языка (по нажатию откроется ActionSheet) -->
+            <ImageButton
+                WidthRequest="32"
+                HeightRequest="32"
+                BackgroundColor="Transparent"
+                Source="{AppThemeBinding Light=language_icon_light.png, Dark=language_icon_dark.png}"
+                Clicked="OnLanguageButtonClicked" />
+
+            <!-- Переключение темы -->
+            <ImageButton
+                WidthRequest="32"
+                HeightRequest="32"
+                BackgroundColor="Transparent"
+                Source="{AppThemeBinding Light=theme_icon_light.png, Dark=theme_icon_dark.png}"
+                Clicked="OnChangeThemeClicked" />
+        </HorizontalStackLayout>
+
+        <!-- Остальной контент настроек (можно расширять позже) -->
+        <Button Text="{Binding [Settings_ChangePassword], Source={x:Static helpers:LocalizationResourceManager.Instance}}"
+                Margin="0,16,0,0"
+                BackgroundColor="#1976D2"
+                TextColor="White"
+                Clicked="OnChangePasswordClicked" />
+
+    </VerticalStackLayout>
+</ContentPage>

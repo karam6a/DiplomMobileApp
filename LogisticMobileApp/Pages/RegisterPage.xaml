@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:helpers="clr-namespace:LogisticMobileApp.Helpers"
+             x:Class="LogisticMobileApp.Pages.RegisterPage"
+             Style="{StaticResource PageStyle}">
+
+    <ScrollView>
+        <StackLayout Padding="20" Spacing="20" VerticalOptions="Center">
+
+            <Label Text="{Binding [Register_Title], Source={x:Static helpers:LocalizationResourceManager.Instance}}"
+                   FontSize="32" FontAttributes="Bold" HorizontalOptions="Center" />
+
+            <Grid Margin="0,10">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <Entry Grid.Column="0"
+                       Text="{Binding Code, Mode=TwoWay}"
+                       Placeholder="{Binding [CodePlaceholder], Source={x:Static helpers:LocalizationResourceManager.Instance}}"/>
+
+                <Button Grid.Column="1"
+                        WidthRequest="40"
+                        HeightRequest="40"
+                        BackgroundColor="Transparent"
+                        Command="{Binding OpenScannerCommand}">
+                    <Button.ImageSource>
+                        <FileImageSource File="camera.svg"/>
+                    </Button.ImageSource>
+                </Button>
+            </Grid>
+
+            <Button Text="{Binding [Register_Button], Source={x:Static helpers:LocalizationResourceManager.Instance}}"
+                    Command="{Binding RegisterCommand}" />
+
+            <Label Text="{Binding [GoToLoginLink], Source={x:Static helpers:LocalizationResourceManager.Instance}}"
+                   Style="{StaticResource LinkLabelStyle}">
+                <Label.GestureRecognizers>
+                    <TapGestureRecognizer Command="{Binding GoToLoginCommand}" />
+                </Label.GestureRecognizers>
+            </Label>
+
+        </StackLayout>
+    </ScrollView>
+</ContentPage>

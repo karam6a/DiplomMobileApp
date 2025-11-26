@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:helpers="clr-namespace:LogisticMobileApp.Helpers"
+             x:Class="LogisticMobileApp.Pages.ConfirmRoutePage"
+             x:Name="Page"
+             Title="{Binding [ConfirmRoute_Title], Source={x:Static helpers:LocalizationResourceManager.Instance}}">
+
+    <ContentPage.Resources>
+        <Style x:Key="CardLabelStyle" TargetType="Label">
+            <Setter Property="TextColor" Value="{AppThemeBinding Light=Black, Dark=White}" />
+            <Style.Triggers>
+                <DataTrigger TargetType="Label" Binding="{Binding IsConfirmed}" Value="True">
+                    <Setter Property="TextColor" Value="White" />
+                </DataTrigger>
+                <DataTrigger TargetType="Label" Binding="{Binding IsRejected}" Value="True">
+                    <Setter Property="TextColor" Value="White" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="MutedCardLabelStyle" TargetType="Label" BasedOn="{StaticResource CardLabelStyle}">
+            <Setter Property="TextColor" Value="{AppThemeBinding Light=DimGray, Dark=Gainsboro}" />
+            <Style.Triggers>
+                <DataTrigger TargetType="Label" Binding="{Binding IsConfirmed}" Value="True">
+                    <Setter Property="TextColor" Value="White" />
+                </DataTrigger>
+                <DataTrigger TargetType="Label" Binding="{Binding IsRejected}" Value="True">
+                    <Setter Property="TextColor" Value="White" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+    </ContentPage.Resources>
+
+    <ScrollView>
+    <VerticalStackLayout Padding="10" Spacing="10">
+
+        <CollectionView ItemsSource="{Binding Stops}" Margin="0,0,0,10">
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <Frame Margin="0,8"
+                           Padding="12"
+                           CornerRadius="12"
+                           HasShadow="True"
+                           BackgroundColor="{AppThemeBinding Light=#FAFAFA, Dark=#1E1E1E}"
+                           BorderColor="{AppThemeBinding Light=#DEDEDE, Dark=#333333}">
+                        <Frame.Triggers>
+                            <DataTrigger TargetType="Frame"
+                                         Binding="{Binding IsConfirmed}" Value="True">
+                                <Setter Property="BackgroundColor" Value="#2E7D32" />
+                                <Setter Property="BorderColor" Value="#1B5E20" />
+                            </DataTrigger>
+                            <DataTrigger TargetType="Frame"
+                                         Binding="{Binding IsRejected}" Value="True">
+                                <Setter Property="BackgroundColor" Value="#C62828" />
+                                <Setter Property="BorderColor" Value="#8E0000" />
+                            </DataTrigger>
+                        </Frame.Triggers>
+
+                        <VerticalStackLayout Spacing="8">
+                            <Label Text="{Binding Name}" FontSize="18" FontAttributes="Bold"
+                                   Style="{StaticResource CardLabelStyle}" />
+                            <Label Text="{Binding Address}" FontSize="14"
+                                   Style="{StaticResource MutedCardLabelStyle}" />
+
+                            <Label FontSize="14" Style="{StaticResource MutedCardLabelStyle}">
+                                <Label.FormattedText>
+                                    <FormattedString>
+                                        <Span Text="{Binding Source={x:Static helpers:LocalizationResourceManager.Instance}, Path=[ConfirmRoute_ContainersLabel]}" />
+                                        <Span Text=" " />
+                                        <Span Text="{Binding ContainerCount}" />
+                                    </FormattedString>
+                                </Label.FormattedText>
+                            </Label>
+
+                            <HorizontalStackLayout Spacing="10">
+                                <Button Text="{Binding [ConfirmRoute_ConfirmButton], Source={x:Static helpers:LocalizationResourceManager.Instance}}"
+                                        BackgroundColor="#388E3C"
+                                        TextColor="White"
+                                        Command="{Binding Source={x:Reference Page}, Path=ConfirmCommand}"
+                                        CommandParameter="{Binding .}" />
+
+                                <Button Text="{Binding [ConfirmRoute_RejectButton], Source={x:Static helpers:LocalizationResourceManager.Instance}}"
+                                        BackgroundColor="#D32F2F"
+                                        TextColor="White"
+                                        Command="{Binding Source={x:Reference Page}, Path=RejectCommand}"
+                                        CommandParameter="{Binding .}" />
+                            </HorizontalStackLayout>
+
+                            <VerticalStackLayout IsVisible="{Binding IsRejected}" Spacing="6">
+
+                                <Frame Padding="0"
+           HasShadow="False"
+           CornerRadius="12"
+           BorderColor="{AppThemeBinding Light=#CCCCCC, Dark=#555555}"
+           BackgroundColor="{AppThemeBinding Light=#FFFFFF, Dark=#2B2B2B}">
+                                    <Entry Placeholder="{Binding [ConfirmRoute_CommentPlaceholder], Source={x:Static helpers:LocalizationResourceManager.Instance}}"
+               Text="{Binding Comment}"
+               BackgroundColor="Transparent"
+               TextColor="{AppThemeBinding Light=Black, Dark=White}"
+               Margin="8,4" />
+                                </Frame>
+                                <Button Text="{Binding [ConfirmRoute_SendComment], Source={x:Static helpers:LocalizationResourceManager.Instance}}"
+                                        BackgroundColor="#1976D2"
+                                        TextColor="White"
+                                        Command="{Binding Source={x:Reference Page}, Path=SendCommentCommand}"
+                                        CommandParameter="{Binding .}" />
+                            </VerticalStackLayout>
+                        </VerticalStackLayout>
+                    </Frame>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+
+        <Button Text="{Binding [ConfirmRoute_FinishRouteButton], Source={x:Static helpers:LocalizationResourceManager.Instance}}"
+                BackgroundColor="#1976D2"
+                TextColor="White"
+                FontAttributes="Bold"
+                IsVisible="{Binding AllFinished}"
+                Command="{Binding FinishRouteCommand}" />
+    </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

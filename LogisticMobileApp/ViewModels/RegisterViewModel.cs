@@ -4,8 +4,8 @@ using System.Windows.Input;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using LogisticMobileApp.Services;
+using LogisticMobileApp.Helpers;
 using Microsoft.Extensions.DependencyInjection;
-
 
 
 namespace LogisticMobileApp.ViewModels;
@@ -70,8 +70,10 @@ public partial class RegisterViewModel : ObservableObject
         try
         {
 
-            var deviceName = LogisticMobileApp.Platforms.Android.Helpers.DeviceHelper.GetDeviceName();
-            var deviceId = await LogisticMobileApp.Platforms.Android.Helpers.DeviceHelper.GetOrCreateDeviceIdentifierAsync();
+            var deviceHelper = _services.GetRequiredService<IDeviceHelper>();
+
+            string deviceName = deviceHelper.GetDeviceName();
+            string deviceId = await deviceHelper.GetOrCreateDeviceIdentifierAsync();
 
 
             var request = new Models.ActivateRequest

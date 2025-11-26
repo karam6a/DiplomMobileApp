@@ -4,6 +4,12 @@ using LogisticMobileApp.ViewModels;
 using LogisticMobileApp.Pages;
 using ZXing.Net.Maui.Controls;
 using LogisticMobileApp.Services;
+using CommunityToolkit.Maui;
+
+
+#if ANDROID
+using LogisticMobileApp.Platforms.Android.Helpers;
+#endif
 
 
 
@@ -17,6 +23,7 @@ public static class MauiProgram
 		builder
 			.UseMauiApp<App>()
 			.UseBarcodeReader()
+            .UseMauiCommunityToolkit()
             .ConfigureFonts(fonts =>
 			{
 				fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
@@ -31,7 +38,12 @@ public static class MauiProgram
         builder.Services.AddTransient<RoutesPage>();
 		builder.Services.AddTransient<RegisterViewModel>();
         builder.Services.AddTransient<RegisterPage>();
-
+        builder.Services.AddTransient<LoginViewModel>();
+#if ANDROID
+        builder.Services.AddSingleton<IDeviceHelper, DeviceHelper>();
+#else
+        builder.Services.AddSingleton<IDeviceHelper>(sp => throw new NotSupportedException());
+#endif
 
 
 #if DEBUG

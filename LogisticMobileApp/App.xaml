@@ -73,7 +73,6 @@
                         Value="{AppThemeBinding Light={StaticResource TextLight},
                                                  Dark={StaticResource TextDark}}" />
             </Style>
-
             <!-- Новый стиль для Picker -->
             <Style TargetType="Picker">
                 <Setter Property="TextColor"

@@ -214,11 +214,56 @@ namespace LogisticMobileApp.Resources.Strings {
         }
         
         /// <summary>
+        ///   Ищет локализованную строку, похожую на Продолжить активацию устройства.
+        /// </summary>
+        public static string Login_AutoLoginFailed {
+            get {
+                return ResourceManager.GetString("Login_AutoLoginFailed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Ищет локализованную строку, похожую на Войти.
         /// </summary>
         public static string Login_Button {
             get {
                 return ResourceManager.GetString("Login_Button", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на Проверка входа....
+        /// </summary>
+        public static string Login_Checking {
+            get {
+                return ResourceManager.GetString("Login_Checking", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на Требуется активация.
+        /// </summary>
+        public static string Login_Failed {
+            get {
+                return ResourceManager.GetString("Login_Failed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на Нет соединения с сервером.
+        /// </summary>
+        public static string Login_NetworkError {
+            get {
+                return ResourceManager.GetString("Login_NetworkError", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на Автовход выполнен.
+        /// </summary>
+        public static string Login_Success {
+            get {
+                return ResourceManager.GetString("Login_Success", resourceCulture);
             }
         }
         
@@ -291,6 +336,24 @@ namespace LogisticMobileApp.Resources.Strings {
         public static string Register_Button {
             get {
                 return ResourceManager.GetString("Register_Button", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на Активация не удалась.
+        /// </summary>
+        public static string Register_Failed {
+            get {
+                return ResourceManager.GetString("Register_Failed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на Устройство успешно активировано.
+        /// </summary>
+        public static string Register_Success {
+            get {
+                return ResourceManager.GetString("Register_Success", resourceCulture);
             }
         }
         

@@ -2,6 +2,7 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="LogisticMobileApp.Pages.MainPage"
+             xmlns:helpers="clr-namespace:LogisticMobileApp.Helpers"
              BackgroundColor="#0F0F1A">
 
     <Grid VerticalOptions="CenterAndExpand"
@@ -20,7 +21,7 @@
                       Grid.Row="0" />
 
         <!-- Текст — во второй строке, под кубиком -->
-        <Label Text="Проверка входа..."
+        <Label Text="{Binding [Login_Checking], Source={x:Static helpers:LocalizationResourceManager.Instance}}"
                TextColor="#AAAAAA"
                FontSize="17"
                FontAttributes="Italic"

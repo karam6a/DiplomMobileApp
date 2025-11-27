@@ -8,10 +8,7 @@
             InitializeComponent();
 
             Services = serviceProvider;
-
-
         }
-
 
         protected override Window CreateWindow(IActivationState? activationState)
         {

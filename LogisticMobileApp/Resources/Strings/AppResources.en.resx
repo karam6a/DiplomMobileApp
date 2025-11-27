@@ -168,8 +168,23 @@
   <data name="Language_PromptTitle" xml:space="preserve">
     <value>Select language</value>
   </data>
+  <data name="Login_AutoLoginFailed" xml:space="preserve">
+    <value>Continue device activation</value>
+  </data>
   <data name="Login_Button" xml:space="preserve">
     <value>Log in</value>
+  </data>
+  <data name="Login_Checking" xml:space="preserve">
+    <value>Checking login...</value>
+  </data>
+  <data name="Login_Failed" xml:space="preserve">
+    <value>Activation required</value>
+  </data>
+  <data name="Login_NetworkError" xml:space="preserve">
+    <value>No connection to server</value>
+  </data>
+  <data name="Login_Success" xml:space="preserve">
+    <value>Auto-login successful</value>
   </data>
   <data name="Login_Title" xml:space="preserve">
     <value>Login</value>
@@ -194,6 +209,12 @@
   </data>
   <data name="Register_Button" xml:space="preserve">
     <value>Register</value>
+  </data>
+  <data name="Register_Failed" xml:space="preserve">
+    <value>Activation failed</value>
+  </data>
+  <data name="Register_Success" xml:space="preserve">
+    <value>Device activated successfully</value>
   </data>
   <data name="Register_Title" xml:space="preserve">
     <value>Register</value>

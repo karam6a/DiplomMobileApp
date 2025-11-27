@@ -10,6 +10,7 @@ public partial class AppShell : Shell
 
         UpdateMenuTitles();
         LocalizationResourceManager.Instance.PropertyChanged += (_, __) => UpdateMenuTitles();
+
     }
 
     private void UpdateMenuTitles()

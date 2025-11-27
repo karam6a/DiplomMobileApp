@@ -8,13 +8,17 @@ namespace LogisticMobileApp.ViewModels;
 public partial class LoginViewModel : ObservableObject
 {
     private readonly ApiService _api;
-    private readonly IDeviceHelper _deviceHelper;
 
-    public LoginViewModel(ApiService api, IDeviceHelper deviceHelper)
+    public LoginViewModel(ApiService api)
     {
         _api = api;
-        _deviceHelper = deviceHelper;
-        _ = TryAutoLoginAsync();
+
+        // ← ГАРАНТИРОВАННЫЙ запуск автологина
+        MainThread.BeginInvokeOnMainThread(async () =>
+        {
+            await Task.Delay(600); // чуть больше — чтобы кубик успел покрутиться
+            await TryAutoLoginAsync();
+        });
     }
 
     private async Task TryAutoLoginAsync()
@@ -27,44 +31,49 @@ public partial class LoginViewModel : ObservableObject
 
             if (success)
             {
-                await MainThread.InvokeOnMainThreadAsync(async () =>
-                {
-                    await CommunityToolkit.Maui.Alerts.Toast
-                        .Make("Автовход выполнен", CommunityToolkit.Maui.Core.ToastDuration.Short, 14)
-                        .Show();
-
-                    await Shell.Current.GoToAsync("//DashboardPage");
-                });
+                await ShowToastAndNavigate(
+                    LocalizationResourceManager.Instance["Login_Success"],
+                    "//DashboardPage");
             }
             else
             {
-                await GoToRegistrationWithToast("Требуется повторная активация устройства");
+                // Любой сбой (нет сети, refresh не прошёл, сервер упал) — просто идём на регистрацию
+                await GoToRegisterPageWithMessage(
+                    LocalizationResourceManager.Instance["Login_AutoLoginFailed"]);
             }
         }
-        catch (Exception ex)
+        catch
         {
-            await GoToRegistrationWithToast($"Ошибка подключения: {ex.Message}");
+            // Любая ошибка — тоже просто идём на регистрацию
+            await GoToRegisterPageWithMessage(
+                LocalizationResourceManager.Instance["Login_NetworkError"]);
         }
     }
 
-    private async Task GoToRegistrationWithToast(string message = "Требуется повторная активация устройства")
+    private async Task ShowToastAndNavigate(string message, string route)
     {
         await MainThread.InvokeOnMainThreadAsync(async () =>
         {
-            // Чистим токены
-            SecureStorage.Remove("access_token");
-            SecureStorage.Remove("refresh_token");
-            SecureStorage.Remove("expires_in");
+            await CommunityToolkit.Maui.Alerts.Toast
+                .Make(message, CommunityToolkit.Maui.Core.ToastDuration.Short, 14)
+                .Show();
 
-            // Показываем красивый тост
+            await Shell.Current.GoToAsync(route);
+        });
+    }
+
+    private async Task GoToRegisterPageWithMessage(string message)
+    {
+        await MainThread.InvokeOnMainThreadAsync(async () =>
+        {
+            // НИКОГДА НЕ ЧИСТИМ ТОКЕНЫ ЗДЕСЬ!
+            // Они могут быть валидными, просто сейчас нет сети
+
             await CommunityToolkit.Maui.Alerts.Toast
                 .Make(message, CommunityToolkit.Maui.Core.ToastDuration.Long, 16)
                 .Show();
 
-            // Небольшая пауза, чтобы пользователь успел прочитать
             await Task.Delay(1000);
-
-            // Переход на страницу регистрации — правильный маршрут!
             await Shell.Current.GoToAsync("//RegisterPage");
         });
     }

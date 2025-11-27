@@ -4,22 +4,31 @@ using System.Globalization;
 using Microsoft.Maui.Storage;
 using LogisticMobileApp.Helpers;
 using LogisticMobileApp.Resources.Strings;
+using LogisticMobileApp.ViewModels;
 
 namespace LogisticMobileApp.Pages
 {
-    public partial class DashboardPage : ContentPage, INotifyPropertyChanged
+    public partial class DashboardPage : ContentPage
     {
-        public DashboardPage()
+        public DashboardPage(DashboardViewModel viewModel)
         {
             InitializeComponent();
+            BindingContext = viewModel;
 
-            // Локализация и тема
-            BindingContext = this;
+            // Точно так же, как на MainPage — обновляем язык при появлении
+            UpdateLanguage();
+        }
+
+        protected override void OnAppearing()
+        {
+            base.OnAppearing();
+            UpdateLanguage();
+        }
+
+        private void UpdateLanguage()
+        {
             var lang = Preferences.Get("Language", CultureInfo.CurrentUICulture.TwoLetterISOLanguageName);
             LocalizationResourceManager.Instance.SetCulture(new CultureInfo(lang));
-
-            var themeStr = Preferences.Get("Theme", "Light");
-            Application.Current.UserAppTheme = themeStr == "Dark" ? AppTheme.Dark : AppTheme.Light;
         }
 
         // Переход на страницу выбора точек

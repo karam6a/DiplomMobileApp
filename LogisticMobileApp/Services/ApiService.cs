@@ -1,4 +1,5 @@
-﻿using System.Net.Http.Json;
+﻿using System.Net.Http.Headers;
+using System.Net.Http.Json;
 using System.Text.Json;
 using LogisticMobileApp.Models;
 
@@ -12,6 +13,7 @@ namespace LogisticMobileApp.Services
         private const string ClientsEndpoint = "api/Clients";
         private const string ActivateEndpoint = "auth/activate";
         private const string RefreshEndpoint = "auth/refresh";
+        private const string DriverMeEndpoint = "api/Drivers/me";
 
         public ApiService()
         {
@@ -19,6 +21,16 @@ namespace LogisticMobileApp.Services
             {
                 BaseAddress = new Uri(BaseAddress)
             };
+        }
+
+        // ← ВОТ ЭТО ГЛАВНОЕ — метод для добавления токена
+        private async Task AddAuthorizationHeaderAsync()
+        {
+            var token = await SecureStorage.Default.GetAsync("access_token");
+            if (!string.IsNullOrWhiteSpace(token))
+            {
+                _http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            }
         }
 
         public async Task<List<ClientItem>> GetClientsAsync(CancellationToken ct = default)
@@ -89,6 +101,49 @@ namespace LogisticMobileApp.Services
             catch
             {
                 return false;
+            }
+        }
+
+        public async Task<DriverInfo?> GetCurrentDriverAsync(CancellationToken ct = default)
+        {
+            try
+            {
+                // Подставляем токен
+                await AddAuthorizationHeaderAsync();
+
+                // Делаем запрос
+                var response = await _http.GetAsync(DriverMeEndpoint, ct);
+
+                // ← ВОТ СЮДА ВСТАВЛЯЕМ ПРОВЕРКУ НА 401
+                if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+                {
+                    // Токен просрочен — пытаемся обновить
+                    var refreshed = await TryRefreshTokenAsync();
+                    if (refreshed)
+                    {
+                        // Повторяем запрос с новым токеном
+                        return await GetCurrentDriverAsync(ct);
+                    }
+                    else
+                    {
+                        // Не удалось обновить — выходим из аккаунта
+                        throw new Exception("Сессия истекла. Требуется повторная активация.");
+                    }
+                }
+
+                // Если не 200 — кидаем ошибку
+                if (!response.IsSuccessStatusCode)
+                {
+                    var errorText = await response.Content.ReadAsStringAsync();
+                    throw new Exception($"Ошибка сервера: {response.StatusCode} — {errorText}");
+                }
+
+                // Успешно — парсим ответ
+                return await response.Content.ReadFromJsonAsync<DriverInfo>(cancellationToken: ct);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Не удалось загрузить данные водителя: {ex.Message}", ex);
             }
         }
     }

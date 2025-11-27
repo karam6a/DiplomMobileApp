@@ -168,8 +168,23 @@
   <data name="Language_PromptTitle" xml:space="preserve">
     <value>Выберите язык</value>
   </data>
+  <data name="Login_AutoLoginFailed" xml:space="preserve">
+    <value>Продолжить активацию устройства</value>
+  </data>
   <data name="Login_Button" xml:space="preserve">
     <value>Войти</value>
+  </data>
+  <data name="Login_Checking" xml:space="preserve">
+    <value>Проверка входа...</value>
+  </data>
+  <data name="Login_Failed" xml:space="preserve">
+    <value>Требуется активация</value>
+  </data>
+  <data name="Login_NetworkError" xml:space="preserve">
+    <value>Нет соединения с сервером</value>
+  </data>
+  <data name="Login_Success" xml:space="preserve">
+    <value>Автовход выполнен</value>
   </data>
   <data name="Login_Title" xml:space="preserve">
     <value>Вход</value>
@@ -194,6 +209,12 @@
   </data>
   <data name="Register_Button" xml:space="preserve">
     <value>Регистрация</value>
+  </data>
+  <data name="Register_Failed" xml:space="preserve">
+    <value>Активация не удалась</value>
+  </data>
+  <data name="Register_Success" xml:space="preserve">
+    <value>Устройство успешно активировано</value>
   </data>
   <data name="Register_Title" xml:space="preserve">
     <value>Регистрация</value>

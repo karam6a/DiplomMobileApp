@@ -6,6 +6,7 @@ using CommunityToolkit.Mvvm.Input;
 using LogisticMobileApp.Services;
 using LogisticMobileApp.Helpers;
 using Microsoft.Extensions.DependencyInjection;
+using LogisticMobileApp.Pages;
 
 
 namespace LogisticMobileApp.ViewModels;
@@ -87,6 +88,11 @@ public partial class RegisterViewModel : ObservableObject
 
             var response = await _api.ActivateAsync(request);
 
+            // ← ВАЖНО: ЧИСТИМ СТАРЫЕ ТОКЕНЫ ПЕРЕД СОХРАНЕНИЕМ НОВЫХ
+            SecureStorage.Remove("access_token");
+            SecureStorage.Remove("refresh_token");
+            SecureStorage.Remove("expires_in");
+
             // Сохраняем токены в SecureStorage
             await SecureStorage.SetAsync("access_token", response.access_token);
             await SecureStorage.SetAsync("refresh_token", response.refresh_token);
@@ -105,6 +111,9 @@ public partial class RegisterViewModel : ObservableObject
 
     private async Task GoToLoginAsync()
     {
+        // Перезагружаем Shell полностью — MainPage создаётся заново
+        Application.Current.MainPage = new AppShell();
+        await Task.Delay(100); // чтобы анимация прошла
         await Shell.Current.GoToAsync("//MainPage");
     }
 }

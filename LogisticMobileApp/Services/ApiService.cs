@@ -14,7 +14,8 @@ namespace LogisticMobileApp.Services
         private const string ActivateEndpoint = "auth/activate";
         private const string RefreshEndpoint = "auth/refresh";
         private const string DriverMeEndpoint = "api/Drivers/me";
-
+        private const string DriverMyRouteEndpoint = "api/Drivers/my-routes";
+            
         public ApiService()
         {
             _http = new HttpClient
@@ -144,6 +145,41 @@ namespace LogisticMobileApp.Services
             catch (Exception ex)
             {
                 throw new Exception($"Не удалось загрузить данные водителя: {ex.Message}", ex);
+            }
+        }
+
+        public async Task<MyRouteInfo?> GetMyRouteAsync(CancellationToken ct = default)
+        {
+            try
+            {
+                await AddAuthorizationHeaderAsync();
+
+                var response = await _http.GetAsync(DriverMyRouteEndpoint, ct);
+
+                if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+                {
+                    var refreshed = await TryRefreshTokenAsync();
+                    if (refreshed)
+                    {
+                        return await GetMyRouteAsync(ct);
+                    }
+                    else
+                    {
+                        throw new Exception("Сессия истекла. Требуется повторная активация.");
+                    }
+                }
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    var errorText = await response.Content.ReadAsStringAsync();
+                    throw new Exception($"Ошибка сервера: {response.StatusCode} — {errorText}");
+                }
+
+                return await response.Content.ReadFromJsonAsync<MyRouteInfo>(cancellationToken: ct);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Не удалось загрузить маршрут: {ex.Message}", ex);
             }
         }
     }

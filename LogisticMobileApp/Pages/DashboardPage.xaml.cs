@@ -10,12 +10,13 @@ namespace LogisticMobileApp.Pages
 {
     public partial class DashboardPage : ContentPage
     {
+        private readonly DashboardViewModel ViewModel;
+
         public DashboardPage(DashboardViewModel viewModel)
         {
             InitializeComponent();
             BindingContext = viewModel;
-
-            // Точно так же, как на MainPage — обновляем язык при появлении
+            ViewModel = viewModel;
             UpdateLanguage();
         }
 
@@ -31,22 +32,22 @@ namespace LogisticMobileApp.Pages
             LocalizationResourceManager.Instance.SetCulture(new CultureInfo(lang));
         }
 
-        // Переход на страницу выбора точек
+        // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
         private async void OnRouteClicked(object sender, EventArgs e)
         {
             var routesPage = App.Services.GetRequiredService<RoutesPage>();
             await Navigation.PushAsync(routesPage);
         }
 
-        // Заглушка статистики
+        // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
         private async void OnStatisticsClicked(object sender, EventArgs e)
         {
             await DisplayAlert(AppResources.Statistics_Button,
-                               "Статистика (логика не реализована)",
+                               "пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ (пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ)",
                                "OK");
         }
 
-        // Кнопка выхода
+        // пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
         private async void OnLogoutClicked(object sender, EventArgs e)
         {
             bool answer = await DisplayAlert(
@@ -60,7 +61,7 @@ namespace LogisticMobileApp.Pages
 #if ANDROID
             Android.OS.Process.KillProcess(Android.OS.Process.MyPid());
 #elif IOS
-            // iOS не позволяет закрыть приложение программно
+            // iOS пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
             System.Diagnostics.Process.GetCurrentProcess().CloseMainWindow();
 #elif WINDOWS || MACCATALYST
             Application.Current.Quit();

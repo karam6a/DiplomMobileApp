@@ -7,9 +7,9 @@
              xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
              Title="{Binding [Dashboard_Title], Source={x:Static helpers:LocalizationResourceManager.Instance}}">
 
-    <!-- Оставляем только один безопасный конвертер -->
     <ContentPage.Resources>
         <toolkit:InvertedBoolConverter x:Key="InverseBooleanConverter" />
+        <toolkit:IsStringNotNullOrEmptyConverter x:Key="StringIsNotEmptyConverter" />
     </ContentPage.Resources>
 
     <ContentPage.ToolbarItems>
@@ -51,15 +51,37 @@
                            TextColor="#BBBBBB" 
                            Margin="0,30,0,0" />
 
-                    <!-- Статус: одна строка, цвет зависит от Is_active -->
-                    <!-- Статус — две метки, одна видна при true, другая при false -->
-                    <Label Grid.Row="2"
-                           Text="{Binding DriverStatus}"
-                           TextColor="{Binding DriverStatusColor}"
-                           FontSize="15"
-                           FontAttributes="Bold"
-                           HorizontalOptions="Center"
-                           Margin="0,12,0,0" />
+                    <!-- Статус водителя и номер машины -->
+                    <Grid Grid.Row="2" ColumnDefinitions="Auto,*" Margin="0,0,0,0">
+                        <Label Text="{Binding DriverStatus}"
+                               TextColor="{Binding DriverStatusColor}"
+                               FontSize="15"
+                               FontAttributes="Bold"
+                               VerticalOptions="Center" />
+
+                        <!-- Номерной знак справа -->
+                        <Border Grid.Column="1"
+                                Stroke="Transparent"
+                                StrokeShape="RoundRectangle 4"
+                                HorizontalOptions="End"
+                                Margin="20,0,0,0"
+                                Padding="0"
+                                IsVisible="{Binding LicensePlate, Converter={StaticResource StringIsNotEmptyConverter}}">
+                            <Grid WidthRequest="150" HeightRequest="35">
+                                <Image Source="plate_template.png"
+                                       Aspect="Fill" />
+                                <Label Text="{Binding LicensePlate}"
+                                       TextColor="Black"
+                                       FontSize="25"
+                                       FontAttributes="Bold"
+                                       FontFamily="Arial"
+                                       HorizontalOptions="Center"
+                                       VerticalOptions="Center"
+                                       Margin="15,0,0,0" />
+                            </Grid>
+                        </Border>
+                    </Grid>
+                    
 
                     <!-- Индикатор загрузки — просто поверх всего -->
                     <ActivityIndicator Grid.RowSpan="3"

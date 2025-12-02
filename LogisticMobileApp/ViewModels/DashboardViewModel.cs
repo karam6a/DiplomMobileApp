@@ -33,6 +33,12 @@ public partial class DashboardViewModel : ObservableObject
     [ObservableProperty]
     private DriverInfo driverInfo;
 
+    [ObservableProperty]
+    private string licensePlate = string.Empty;
+
+    [ObservableProperty]
+    private MyRouteInfo myRouteInfo;
+
     public DashboardViewModel(ApiService api)
     {
         _api = api;
@@ -55,6 +61,21 @@ public partial class DashboardViewModel : ObservableObject
 
                 DriverStatus = driver.Is_active ? "Активен" : "Неактивен";
                 DriverStatusColor = driver.Is_active ? Colors.Green : Colors.Red;
+
+                // Загружаем маршрут для получения номера машины
+                try
+                {
+                    var route = await _api.GetMyRouteAsync();
+                    if (route != null)
+                    {
+                        LicensePlate = route.LicensePlate;
+                    }
+                }
+                catch
+                {
+                    // Маршрут может отсутствовать - это нормально
+                    LicensePlate = string.Empty;
+                }
             }
             else
             {

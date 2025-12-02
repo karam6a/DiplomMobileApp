@@ -7,7 +7,6 @@ public partial class AppShell : Shell
     public AppShell()
     {
         InitializeComponent();
-
         UpdateMenuTitles();
         LocalizationResourceManager.Instance.PropertyChanged += (_, __) => UpdateMenuTitles();
 

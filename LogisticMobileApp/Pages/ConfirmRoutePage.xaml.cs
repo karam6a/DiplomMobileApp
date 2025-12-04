@@ -2,6 +2,8 @@
 using Microsoft.Maui.Controls;
 using LogisticMobileApp.ViewModels;
 using LogisticMobileApp.Models;
+using LogisticMobileApp.Services;
+using CommunityToolkit.Maui.Alerts;
 
 namespace LogisticMobileApp.Pages
 {
@@ -11,9 +13,13 @@ namespace LogisticMobileApp.Pages
         public ICommand RejectCommand { get; }
         public ICommand SendCommentCommand { get; }
 
-        public ConfirmRoutePage(IEnumerable<ClientItem> selected)
+        private readonly ApiService _apiService;
+
+        public ConfirmRoutePage(List<ClientData> clientsData)
         {
-            InitializeComponent(); // ← остаётся первым!
+            InitializeComponent();
+
+            _apiService = App.Services.GetRequiredService<ApiService>();
 
             ConfirmCommand = new Command<RouteStop>(stop =>
             {
@@ -38,9 +44,32 @@ namespace LogisticMobileApp.Pages
                     "OK");
             });
 
-            BindingContext = new ConfirmRouteViewModel(selected);
+            BindingContext = new ConfirmRouteViewModel(clientsData);
+        }
+
+        private async void OnFinishRouteClicked(object sender, EventArgs e)
+        {
+            try
+            {
+                var result = await _apiService.EndRouteAsync();
+                if (result)
+                {
+                    // Очищаем информацию о маршруте в Preferences
+                    Preferences.Set("RouteStarted", false);
+                    Preferences.Remove("RouteId");
+                    Preferences.Remove("RouteStartTime");
+
+                    // Показываем тост
+                    await Toast.Make("Маршрут завершён!", CommunityToolkit.Maui.Core.ToastDuration.Short).Show();
+
+                    // Переходим на Dashboard
+                    await Shell.Current.GoToAsync("//DashboardPage");
+                }
+            }
+            catch (Exception ex)
+            {
+                await DisplayAlert("Ошибка", ex.Message, "OK");
+            }
         }
     }
-
-
 }

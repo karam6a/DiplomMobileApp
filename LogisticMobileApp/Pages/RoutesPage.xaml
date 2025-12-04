@@ -3,68 +3,73 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:helpers="clr-namespace:LogisticMobileApp.Helpers"
              x:Class="LogisticMobileApp.Pages.RoutesPage"
-             Title="{Binding [Routes_Title], Source={x:Static helpers:LocalizationResourceManager.Instance}}">
+             Title="{Binding RouteName}">
 
-    <Grid RowDefinitions="*,Auto">
+    <Grid RowDefinitions="Auto,*">
+
+        <!-- Заголовок -->
+        <Label Grid.Row="0"
+               Text="Точки маршрута"
+               FontSize="22"
+               FontAttributes="Bold"
+               HorizontalOptions="Center"
+               Margin="0,15,0,10" />
 
         <!-- Список клиентов -->
-        <CollectionView Grid.Row="0"
+        <CollectionView Grid.Row="1"
                         ItemsSource="{Binding Clients}"
                         Margin="10"
                         VerticalOptions="Fill">
             <CollectionView.ItemTemplate>
                 <DataTemplate>
                     <Frame CornerRadius="12"
-                           Margin="0,8"
-                           Padding="12"
+                           Margin="0,6"
+                           Padding="16"
                            HasShadow="True"
                            BackgroundColor="{AppThemeBinding Light=#FFFFFF, Dark=#1E1E1E}"
                            BorderColor="{AppThemeBinding Light=#E0E0E0, Dark=#333333}">
 
-                        <HorizontalStackLayout Spacing="12">
-                            <CheckBox IsChecked="{Binding IsSelected}"
-                                      VerticalOptions="Center" />
-
-                            <VerticalStackLayout Spacing="4">
+                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
+                            <VerticalStackLayout Spacing="6">
+                                <!-- Название клиента -->
                                 <Label Text="{Binding Name}"
-                                       FontAttributes="Bold"
                                        FontSize="18"
+                                       FontAttributes="Bold"
                                        TextColor="{AppThemeBinding Light=Black, Dark=White}" />
 
+                                <!-- Адрес -->
                                 <Label Text="{Binding Address}"
                                        FontSize="14"
                                        TextColor="{AppThemeBinding Light=DimGray, Dark=Gainsboro}" />
 
-                                <Label Text="{Binding City}"
-                                       FontSize="13"
-                                       TextColor="{AppThemeBinding Light=Gray, Dark=LightGray}" />
-
-                                <Label FontSize="13"
-                                       TextColor="{AppThemeBinding Light=Gray, Dark=LightGray}">
-                                    <Label.FormattedText>
-                                        <FormattedString>
-                                            <Span Text="{Binding Source={x:Static helpers:LocalizationResourceManager.Instance}, Path=[Routes_ContainersLabel]}" />
-                                            <Span Text=" " />
-                                            <Span Text="{Binding ContainerCount}" />
-                                        </FormattedString>
-                                    </Label.FormattedText>
-                                </Label>
+                                <!-- Количество контейнеров -->
+                                <HorizontalStackLayout Spacing="5">
+                                    <Label Text="Контейнеров:"
+                                           FontSize="13"
+                                           FontAttributes="Bold"
+                                           TextColor="{AppThemeBinding Light=Gray, Dark=LightGray}" />
+                                    <Label Text="{Binding ContainerCount}"
+                                           FontSize="13"
+                                           TextColor="#512DA8"
+                                           FontAttributes="Bold" />
+                                </HorizontalStackLayout>
                             </VerticalStackLayout>
-                        </HorizontalStackLayout>
+
+                            <!-- Иконка карты -->
+                            <ImageButton Grid.Column="1"
+                                         Source="map_icon.svg"
+                                         BackgroundColor="Transparent"
+                                         WidthRequest="40"
+                                         HeightRequest="40">
+                                <ImageButton.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="OnMapIconTapped" CommandParameter="{Binding .}" />
+                                </ImageButton.GestureRecognizers>
+                            </ImageButton>
+                        </Grid>
                     </Frame>
                 </DataTemplate>
             </CollectionView.ItemTemplate>
         </CollectionView>
-
-        <!-- Кнопка построения маршрута -->
-        <Button Grid.Row="1"
-                Text="{Binding [Routes_BuildButton], Source={x:Static helpers:LocalizationResourceManager.Instance}}"
-                Command="{Binding BuildRouteCommand}"
-               
-                HorizontalOptions="Fill"
-                Margin="10,0,10,10"
-                BackgroundColor="#2E7D32"
-                TextColor="White" />
 
     </Grid>
 </ContentPage>

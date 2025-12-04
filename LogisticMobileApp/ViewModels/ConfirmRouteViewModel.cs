@@ -5,8 +5,8 @@ using System.ComponentModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
-using Microsoft.Maui.Controls;                 // для Command и Shell
-using LogisticMobileApp.Models;                // ClientItem, RouteStop
+using Microsoft.Maui.Controls;
+using LogisticMobileApp.Models;
 
 namespace LogisticMobileApp.ViewModels
 {
@@ -19,13 +19,11 @@ namespace LogisticMobileApp.ViewModels
         /// </summary>
         public bool AllFinished => Stops?.Count > 0 && Stops.All(s => s.IsConfirmed || s.IsRejected);
 
-        public ICommand FinishRouteCommand { get; }
-
-        public ConfirmRouteViewModel(System.Collections.Generic.IEnumerable<ClientItem> selected)
+        public ConfirmRouteViewModel(List<ClientData> clientsData)
         {
-            // Преобразуем выбранные ClientItem в RouteStop для экрана подтверждения
+            // Преобразуем ClientData в RouteStop для экрана подтверждения
             Stops = new ObservableCollection<RouteStop>(
-                (selected ?? Array.Empty<ClientItem>()).Select(c => new RouteStop
+                (clientsData ?? new List<ClientData>()).Select(c => new RouteStop
                 {
                     Id = c.Id,
                     Name = c.Name,
@@ -38,12 +36,6 @@ namespace LogisticMobileApp.ViewModels
                 SubscribeStop(s);
 
             Stops.CollectionChanged += Stops_CollectionChanged;
-
-            FinishRouteCommand = new Command(async () =>
-            {
-                // Навигация на главную (рабочая панель)
-                await Shell.Current.GoToAsync("//DashboardPage");
-            });
         }
 
         private void Stops_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)

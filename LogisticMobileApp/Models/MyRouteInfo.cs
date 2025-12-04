@@ -7,8 +7,8 @@ namespace LogisticMobileApp.Models
         [JsonPropertyName("id")]
         public int Id { get; set; }
 
-        [JsonPropertyName("name")]
-        public string Name { get; set; } = string.Empty;
+        [JsonPropertyName("route_name")]
+        public string RouteName { get; set; } = string.Empty;
 
         [JsonPropertyName("distance")]
         public double Distance { get; set; }
@@ -24,6 +24,8 @@ namespace LogisticMobileApp.Models
 
         [JsonPropertyName("license_plate")]
         public string LicensePlate { get; set; } = string.Empty;
+
+        [JsonPropertyName("clients_data")]
+        public List<ClientData> ClientsData { get; set; } = new();
     }
 }
-

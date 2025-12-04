@@ -10,11 +10,12 @@ namespace LogisticMobileApp.Services
         private readonly HttpClient _http;
 
         private const string BaseAddress = "https://esme-aspiratory-september.ngrok-free.dev/";
-        private const string ClientsEndpoint = "api/Clients";
         private const string ActivateEndpoint = "auth/activate";
         private const string RefreshEndpoint = "auth/refresh";
         private const string DriverMeEndpoint = "api/Drivers/me";
         private const string DriverMyRouteEndpoint = "api/Drivers/my-routes";
+        private const string DriverRouteStartEndpoint = "api/Drivers/route-start";
+        private const string DriverRouteEndEndpoint = "api/Drivers/route-end";
             
         public ApiService()
         {
@@ -31,19 +32,6 @@ namespace LogisticMobileApp.Services
             if (!string.IsNullOrWhiteSpace(token))
             {
                 _http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            }
-        }
-
-        public async Task<List<ClientItem>> GetClientsAsync(CancellationToken ct = default)
-        {
-            try
-            {
-                var data = await _http.GetFromJsonAsync<List<ClientItem>>(ClientsEndpoint, ct);
-                return data ?? new List<ClientItem>();
-            }
-            catch (Exception ex)
-            {
-                throw new Exception($"Ошибка при обращении к API: {ex.Message}");
             }
         }
 
@@ -180,6 +168,76 @@ namespace LogisticMobileApp.Services
             catch (Exception ex)
             {
                 throw new Exception($"Не удалось загрузить маршрут: {ex.Message}", ex);
+            }
+        }
+
+        public async Task<bool> StartRouteAsync(CancellationToken ct = default)
+        {
+            try
+            {
+                await AddAuthorizationHeaderAsync();
+
+                var response = await _http.PostAsync(DriverRouteStartEndpoint, null, ct);
+
+                if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+                {
+                    var refreshed = await TryRefreshTokenAsync();
+                    if (refreshed)
+                    {
+                        return await StartRouteAsync(ct);
+                    }
+                    else
+                    {
+                        throw new Exception("Сессия истекла. Требуется повторная активация.");
+                    }
+                }
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    var errorText = await response.Content.ReadAsStringAsync();
+                    throw new Exception($"Ошибка сервера: {response.StatusCode} — {errorText}");
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Не удалось начать маршрут: {ex.Message}", ex);
+            }
+        }
+
+        public async Task<bool> EndRouteAsync(CancellationToken ct = default)
+        {
+            try
+            {
+                await AddAuthorizationHeaderAsync();
+
+                var response = await _http.PostAsync(DriverRouteEndEndpoint, null, ct);
+
+                if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+                {
+                    var refreshed = await TryRefreshTokenAsync();
+                    if (refreshed)
+                    {
+                        return await EndRouteAsync(ct);
+                    }
+                    else
+                    {
+                        throw new Exception("Сессия истекла. Требуется повторная активация.");
+                    }
+                }
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    var errorText = await response.Content.ReadAsStringAsync();
+                    throw new Exception($"Ошибка сервера: {response.StatusCode} — {errorText}");
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Не удалось завершить маршрут: {ex.Message}", ex);
             }
         }
     }

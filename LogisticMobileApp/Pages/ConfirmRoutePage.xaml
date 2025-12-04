@@ -117,7 +117,7 @@
                 TextColor="White"
                 FontAttributes="Bold"
                 IsVisible="{Binding AllFinished}"
-                Command="{Binding FinishRouteCommand}" />
+                Clicked="OnFinishRouteClicked" />
     </VerticalStackLayout>
     </ScrollView>
 </ContentPage>

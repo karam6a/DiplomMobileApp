@@ -30,7 +30,9 @@ public static class MauiProgram
 				fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
 				fonts.AddFont("MaterialIcons-Regular.ttf", "MaterialIcons");
 				fonts.AddFont("Font Awesome 7 Free-Solid-900.otf", "FA");
-			});
+                fonts.AddFont("RoadNumbers.otf", "BelarusGOST");
+
+            });
         builder.Services.AddSingleton(LocalizationResourceManager.Instance);
         builder.Services.AddSingleton<ApiService>();
         builder.Services.AddTransient<RegisterViewModel>();

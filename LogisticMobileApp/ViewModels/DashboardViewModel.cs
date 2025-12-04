@@ -37,7 +37,28 @@ public partial class DashboardViewModel : ObservableObject
     private string licensePlate = string.Empty;
 
     [ObservableProperty]
+    private string name = string.Empty;
+
+    [ObservableProperty]
+    private string status = string.Empty;
+
+    [ObservableProperty]
+    private string distance = string.Empty;
+
+    [ObservableProperty]
+    private string duration = string.Empty;
+
+    [ObservableProperty]
     private MyRouteInfo myRouteInfo;
+
+    [ObservableProperty]
+    private string geometryJson = string.Empty;
+
+    [ObservableProperty]
+    private bool isRouteStarted = false;
+
+    [ObservableProperty]
+    private string startButtonText = "Начать";
 
     public DashboardViewModel(ApiService api)
     {
@@ -56,25 +77,49 @@ public partial class DashboardViewModel : ObservableObject
 
             if (driver != null)
             {
-                DriverName = driver.Name;
-                DriverPhone = driver.Phone_number;
-
-                DriverStatus = driver.Is_active ? "Активен" : "Неактивен";
-                DriverStatusColor = driver.Is_active ? Colors.Green : Colors.Red;
-
                 // Загружаем маршрут для получения номера машины
                 try
                 {
                     var route = await _api.GetMyRouteAsync();
                     if (route != null)
                     {
+                        IsLoading = false;
+
+                        DriverName = driver.Name;
+                        DriverPhone = driver.Phone_number;
+
+                        DriverStatus = driver.Is_active ? "Активен" : "Неактивен";
+                        DriverStatusColor = driver.Is_active ? Colors.Green : Colors.Red;
+
                         LicensePlate = route.LicensePlate;
+                        GeometryJson = route.GeometryJson;
+
+                        Name = route.RouteName.Split(' ', StringSplitOptions.RemoveEmptyEntries)[1];
+                        Status = route.Status;
+                        Distance = route.Distance.ToString();
+                        Duration = route.Duration.ToString();
+                        MyRouteInfo = route;
+
+                        // Проверяем, начат ли маршрут
+                        var routeStarted = Preferences.Get("RouteStarted", false);
+                        var savedRouteId = Preferences.Get("RouteId", 0);
+                        
+                        if (routeStarted && savedRouteId == route.Id)
+                        {
+                            IsRouteStarted = true;
+                            StartButtonText = "Продолжить";
+                        }
+                        else
+                        {
+                            IsRouteStarted = false;
+                            StartButtonText = "Начать";
+                        }
                     }
                 }
                 catch
                 {
                     // Маршрут может отсутствовать - это нормально
-                    LicensePlate = string.Empty;
+                    LicensePlate = "AA 0000-0";
                 }
             }
             else

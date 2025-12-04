@@ -27,6 +27,7 @@
                    FontSize="28" FontAttributes="Bold" HorizontalOptions="Center" />
 
             <!-- КАРТОЧКА ВОДИТЕЛЯ — БЕЗОПАСНАЯ В RELEASE -->
+            
             <Frame BackgroundColor="#1E1E2E" 
                    CornerRadius="16" 
                    Padding="20" 
@@ -67,17 +68,23 @@
                                 Margin="20,0,0,0"
                                 Padding="0"
                                 IsVisible="{Binding LicensePlate, Converter={StaticResource StringIsNotEmptyConverter}}">
-                            <Grid WidthRequest="150" HeightRequest="35">
+                            <Grid WidthRequest="145" HeightRequest="30">
                                 <Image Source="plate_template.png"
                                        Aspect="Fill" />
                                 <Label Text="{Binding LicensePlate}"
                                        TextColor="Black"
                                        FontSize="25"
-                                       FontAttributes="Bold"
                                        FontFamily="Arial"
                                        HorizontalOptions="Center"
                                        VerticalOptions="Center"
-                                       Margin="15,0,0,0" />
+                                       Margin="20,-3,0,0">
+                                <Label.Shadow>
+                                    <Shadow Brush="Black"
+                                            Offset="0,1"
+                                            Radius="0"
+                                            Opacity="0.6" />
+                                </Label.Shadow>
+                                </Label>
                             </Grid>
                         </Border>
                     </Grid>
@@ -103,13 +110,56 @@
                 </Grid>
             </Frame>
 
-            <!-- Кнопки -->
-            <Button Text="Маршруты"
-                    Clicked="OnRouteClicked"
-                    BackgroundColor="#512DA8"
-                    TextColor="White"
-                    CornerRadius="12" />
+            <!-- КАРТОЧКА МАРШРУТА — сразу под карточкой водителя -->
+            <Frame BackgroundColor="#2A0F6D" 
+                   CornerRadius="20" 
+                   Padding="20" 
+                   Margin="0,20,0,0"
+                   HasShadow="True">
 
+                <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto" RowSpacing="16">
+
+                    <!-- Заголовок -->
+                    <Label Text="Активный маршрут" 
+                           FontSize="18" 
+                           FontAttributes="Bold" 
+                           TextColor="White" />
+
+                    <!-- Название маршрута -->
+                    <Label Grid.Row="1"
+                           Text="{Binding Name}"
+                           FontSize="14"
+                           FontAttributes="Bold"
+                           TextColor="White" />
+
+                    <!-- Расстояние + время -->
+                    <Grid Grid.Row="2" ColumnDefinitions="*,*" ColumnSpacing="30">
+                        <Frame BackgroundColor="#4D397E" CornerRadius="16" Padding="16">
+                            <StackLayout>
+                                <Label Text="Расстояние" FontSize="12" TextColor="#EEEEEE" />
+                                <Label Text="{Binding Distance, StringFormat='{0} км'}"
+                           FontSize="22" FontAttributes="Bold" TextColor="White" />
+                            </StackLayout>
+                        </Frame>
+
+                        <Frame Grid.Column="1" BackgroundColor="#4D397E" CornerRadius="16" Padding="16">
+                            <StackLayout>
+                                <Label Text="Время в пути" FontSize="12" TextColor="#EEEEEE" />
+                                <Label Text="{Binding Duration, StringFormat='{0} мин'}"
+                           FontSize="22" FontAttributes="Bold" TextColor="White" />
+                            </StackLayout>
+                        </Frame>
+                    </Grid>
+
+                    <Grid Grid.Row="3" ColumnDefinitions="auto,*" ColumnSpacing="10">
+                        <Button Grid.Column="0" Text="Показать маршрут" FontSize="15" BackgroundColor="#7B68EE" Clicked="OnShowRouteClicked"/>
+                        <Button Grid.Column="1" Text="{Binding StartButtonText}" FontSize="15" BackgroundColor="#047A04" Clicked="OnStartRouteClicked"/>
+                    </Grid>
+
+                </Grid>
+            </Frame>
+
+            <!-- Кнопки -->
             <Button Text="Статистика" 
                     Clicked="OnStatisticsClicked" 
                     BackgroundColor="#333333" 

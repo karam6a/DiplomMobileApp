@@ -6,6 +6,13 @@
              x:Name="Page"
              Title="{Binding [ConfirmRoute_Title], Source={x:Static helpers:LocalizationResourceManager.Instance}}">
 
+    <ContentPage.ToolbarItems>
+        <ToolbarItem IconImageSource="map_icon.svg"
+                     Order="Primary"
+                     Priority="0"
+                     Clicked="OnMapToolbarItemClicked" />
+    </ContentPage.ToolbarItems>
+
     <ContentPage.Resources>
         <Style x:Key="CardLabelStyle" TargetType="Label">
             <Setter Property="TextColor" Value="{AppThemeBinding Light=Black, Dark=White}" />

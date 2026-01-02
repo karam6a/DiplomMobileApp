@@ -18,7 +18,7 @@
                 WidthRequest="32"
                 HeightRequest="32"
                 BackgroundColor="Transparent"
-                Source="{AppThemeBinding Light=language_icon_light.png, Dark=language_icon_dark.png}"
+                Source="{AppThemeBinding Light=language_icon_light.png, Dark=language_icon_dark.svg}"
                 Clicked="OnLanguageButtonClicked" />
 
             <!-- Переключение темы -->
@@ -29,13 +29,5 @@
                 Source="{AppThemeBinding Light=theme_icon_light.png, Dark=theme_icon_dark.png}"
                 Clicked="OnChangeThemeClicked" />
         </HorizontalStackLayout>
-
-        <!-- Остальной контент настроек (можно расширять позже) -->
-        <Button Text="{Binding [Settings_ChangePassword], Source={x:Static helpers:LocalizationResourceManager.Instance}}"
-                Margin="0,16,0,0"
-                BackgroundColor="#1976D2"
-                TextColor="White"
-                Clicked="OnChangePasswordClicked" />
-
     </VerticalStackLayout>
 </ContentPage>

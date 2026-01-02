@@ -2,6 +2,8 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using LogisticMobileApp.Models;
 using LogisticMobileApp.Services;
+using LogisticMobileApp.Helpers;
+using LogisticMobileApp.Resources.Strings;
 
 namespace LogisticMobileApp.ViewModels;
 
@@ -88,7 +90,7 @@ public partial class DashboardViewModel : ObservableObject
                         DriverName = driver.Name;
                         DriverPhone = driver.Phone_number;
 
-                        DriverStatus = driver.Is_active ? "Активен" : "Неактивен";
+                        DriverStatus = driver.Is_active ? AppResources.DriverActiveLabel : AppResources.DriverInactiveLabel;
                         DriverStatusColor = driver.Is_active ? Colors.Green : Colors.Red;
 
                         LicensePlate = route.LicensePlate;
@@ -96,8 +98,12 @@ public partial class DashboardViewModel : ObservableObject
 
                         Name = route.RouteName.Split(' ', StringSplitOptions.RemoveEmptyEntries)[1];
                         Status = route.Status;
+
                         Distance = route.Distance.ToString();
                         Duration = route.Duration.ToString();
+
+                        //Distance = 54.7.ToString();
+                        //Duration = 87.4.ToString();
                         MyRouteInfo = route;
 
                         // Проверяем, начат ли маршрут
@@ -107,12 +113,12 @@ public partial class DashboardViewModel : ObservableObject
                         if (routeStarted && savedRouteId == route.Id)
                         {
                             IsRouteStarted = true;
-                            StartButtonText = "Продолжить";
+                            StartButtonText = AppResources.ContinueButtonText;
                         }
                         else
                         {
                             IsRouteStarted = false;
-                            StartButtonText = "Начать";
+                            StartButtonText = AppResources.StartButtonText;
                         }
                     }
                 }

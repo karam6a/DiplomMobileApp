@@ -87,7 +87,7 @@ namespace LogisticMobileApp.Pages
                     ViewModel.StartButtonText = "Продолжить";
 
                     // Показываем тост
-                    await Toast.Make("Маршрут начат!", CommunityToolkit.Maui.Core.ToastDuration.Short).Show();
+                    await Toast.Make(AppResources.StartRouteToast, CommunityToolkit.Maui.Core.ToastDuration.Short).Show();
 
                     // Переходим на страницу подтверждения
                     var confirmPage = new ConfirmRoutePage(_apiService, ViewModel.MyRouteInfo.ClientsData);
@@ -100,13 +100,6 @@ namespace LogisticMobileApp.Pages
             }
         }
 
-        // Статистика
-        private async void OnStatisticsClicked(object sender, EventArgs e)
-        {
-            await DisplayAlert(AppResources.Statistics_Button,
-                               "���������� (������ �� �����������)",
-                               "OK");
-        }
         private async void OnLogoutClicked(object sender, EventArgs e)
         {
             bool answer = await DisplayAlert(

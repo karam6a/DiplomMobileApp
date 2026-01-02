@@ -53,19 +53,7 @@
 		<MauiImage Update="Resources\Images\dotnet_bot.png" Resize="True" BaseSize="300,185">
 		  <CopyToOutputDirectory>Never</CopyToOutputDirectory>
 		</MauiImage>
-		<MauiImage Update="Resources\Images\language_icon_dark.png">
-		  <CopyToOutputDirectory>Never</CopyToOutputDirectory>
-		</MauiImage>
-		<MauiImage Update="Resources\Images\language_icon_light.png">
-		  <CopyToOutputDirectory>Never</CopyToOutputDirectory>
-		</MauiImage>
 		<MauiImage Update="Resources\Images\logout_icon.png">
-		  <CopyToOutputDirectory>Never</CopyToOutputDirectory>
-		</MauiImage>
-		<MauiImage Update="Resources\Images\theme_icon_dark.png">
-		  <CopyToOutputDirectory>Never</CopyToOutputDirectory>
-		</MauiImage>
-		<MauiImage Update="Resources\Images\theme_icon_light.png">
 		  <CopyToOutputDirectory>Never</CopyToOutputDirectory>
 		</MauiImage>
 

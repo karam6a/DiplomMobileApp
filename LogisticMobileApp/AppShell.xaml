@@ -9,7 +9,6 @@
         <x:String x:Key="Menu_Register">Регистрация</x:String>
         <x:String x:Key="Menu_Dashboard">Рабочая панель</x:String>
         <x:String x:Key="Menu_Settings">Настройки</x:String>
-        <x:String x:Key="Menu_Routes">Маршруты</x:String>
         <x:String x:Key="Menu_Confirm">Подтверждение</x:String>
     </Shell.Resources>
 
@@ -29,11 +28,6 @@
         Title="{DynamicResource Menu_Dashboard}"
         ContentTemplate="{DataTemplate pages:DashboardPage}"
         Route="DashboardPage" />
-    
-    <ShellContent
-        Title="{DynamicResource Menu_Routes}"
-        ContentTemplate="{DataTemplate pages:RoutesPage}"
-        Route="RoutesPage" />
 
     <ShellContent
         Title="{DynamicResource Menu_Confirm}"

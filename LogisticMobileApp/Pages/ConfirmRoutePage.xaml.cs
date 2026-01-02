@@ -60,6 +60,8 @@ namespace LogisticMobileApp.Pages
                     Preferences.Remove("RouteId");
                     Preferences.Remove("RouteStartTime");
 
+                    Preferences.Set("NoActiveRoute", true);
+
                     await Toast.Make("Маршрут завершён!", CommunityToolkit.Maui.Core.ToastDuration.Short).Show();
                     await Shell.Current.GoToAsync("//DashboardPage");
                 }

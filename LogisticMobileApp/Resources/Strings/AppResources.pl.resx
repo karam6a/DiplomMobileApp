@@ -117,6 +117,9 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="Active_Route_Label" xml:space="preserve">
+    <value>Aktywna trasa</value>
+  </data>
   <data name="App_Name" xml:space="preserve">
     <value>Logistyka odpadów</value>
   </data>
@@ -150,17 +153,38 @@
   <data name="ConfirmRoute_Title" xml:space="preserve">
     <value>Potwierdzenie punktów</value>
   </data>
+  <data name="ContinueButtonText" xml:space="preserve">
+    <value>Kontynuować</value>
+  </data>
   <data name="Dashboard_Title" xml:space="preserve">
     <value>Panel roboczy</value>
   </data>
+  <data name="Distance_Label" xml:space="preserve">
+    <value>Odległość</value>
+  </data>
+  <data name="DriverActiveLabel" xml:space="preserve">
+    <value>Aktywny</value>
+  </data>
+  <data name="DriverInactiveLabel" xml:space="preserve">
+    <value>Nie aktywny</value>
+  </data>
+  <data name="Driver_Label" xml:space="preserve">
+    <value>Kierowca</value>
+  </data>
   <data name="EmailPlaceholder" xml:space="preserve">
     <value>E-mail</value>
+  </data>
+  <data name="ExitButton" xml:space="preserve">
+    <value>Wyjść</value>
   </data>
   <data name="GoToLoginLink" xml:space="preserve">
     <value>Masz już konto? Zaloguj się</value>
   </data>
   <data name="GoToRegisterLink" xml:space="preserve">
     <value>Nie masz konta? Zarejestruj się</value>
+  </data>
+  <data name="KilometersLabel" xml:space="preserve">
+    <value>km</value>
   </data>
   <data name="Language_Cancel" xml:space="preserve">
     <value>Anuluj</value>
@@ -200,6 +224,9 @@
   </data>
   <data name="Logout_Yes" xml:space="preserve">
     <value>Tak</value>
+  </data>
+  <data name="MinutesLabel" xml:space="preserve">
+    <value>min</value>
   </data>
   <data name="NamePlaceholder" xml:space="preserve">
     <value>Imię</value>
@@ -255,6 +282,15 @@
   <data name="Settings_Title" xml:space="preserve">
     <value>Ustawienia</value>
   </data>
+  <data name="ShowRouteLabel" xml:space="preserve">
+    <value>Pokaż trasę</value>
+  </data>
+  <data name="StartButtonText" xml:space="preserve">
+    <value>Zacząć</value>
+  </data>
+  <data name="StartRouteToast" xml:space="preserve">
+    <value>Trasa rozpoczęta!</value>
+  </data>
   <data name="Statistics_Button" xml:space="preserve">
     <value>Statystyki</value>
   </data>
@@ -263,5 +299,8 @@
   </data>
   <data name="Theme_Light" xml:space="preserve">
     <value>Jasny motyw</value>
+  </data>
+  <data name="TravelTimeLabel" xml:space="preserve">
+    <value>Czas podróży</value>
   </data>
 </root>

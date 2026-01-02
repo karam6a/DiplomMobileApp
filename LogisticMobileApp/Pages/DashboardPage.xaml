@@ -21,11 +21,6 @@
 
     <ScrollView>
         <StackLayout Padding="20" Spacing="15">
-
-            <!-- Заголовок -->
-            <Label Text="{Binding [Dashboard_Title], Source={x:Static helpers:LocalizationResourceManager.Instance}}"
-                   FontSize="28" FontAttributes="Bold" HorizontalOptions="Center" />
-
             <!-- КАРТОЧКА ВОДИТЕЛЯ — БЕЗОПАСНАЯ В RELEASE -->
             
             <Frame BackgroundColor="#1E1E2E" 
@@ -35,8 +30,8 @@
 
                 <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="10">
 
-                    <Label Text="Водитель" 
-                           FontSize="18" 
+                    <Label Text="{Binding [Driver_Label], Source={x:Static helpers:LocalizationResourceManager.Instance}}" 
+                           FontSize="24" 
                            FontAttributes="Bold" 
                            TextColor="#AAAAAA" />
 
@@ -111,7 +106,7 @@
             </Frame>
 
             <!-- КАРТОЧКА МАРШРУТА — сразу под карточкой водителя -->
-            <Frame BackgroundColor="#2A0F6D" 
+            <Frame BackgroundColor="#1E1E2E" 
                    CornerRadius="20" 
                    Padding="20" 
                    Margin="0,20,0,0"
@@ -120,15 +115,15 @@
                 <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto" RowSpacing="16">
 
                     <!-- Заголовок -->
-                    <Label Text="Активный маршрут" 
-                           FontSize="18" 
+                    <Label Text="{Binding [Active_Route_Label], Source={x:Static helpers:LocalizationResourceManager.Instance}}" 
+                           FontSize="24" 
                            FontAttributes="Bold" 
-                           TextColor="White" />
+                           TextColor="#AAAAAA" />
 
                     <!-- Название маршрута -->
                     <Label Grid.Row="1"
                            Text="{Binding Name}"
-                           FontSize="14"
+                           FontSize="16"
                            FontAttributes="Bold"
                            TextColor="White" />
 
@@ -136,23 +131,43 @@
                     <Grid Grid.Row="2" ColumnDefinitions="*,*" ColumnSpacing="30">
                         <Frame BackgroundColor="#4D397E" CornerRadius="16" Padding="16">
                             <StackLayout>
-                                <Label Text="Расстояние" FontSize="12" TextColor="#EEEEEE" />
-                                <Label Text="{Binding Distance, StringFormat='{0} км'}"
-                           FontSize="22" FontAttributes="Bold" TextColor="White" />
+                                <Label Text="{Binding [Distance_Label], Source={x:Static helpers:LocalizationResourceManager.Instance}}" FontSize="12" TextColor="#EEEEEE" />
+                                <Label FontSize="22" 
+                                       FontAttributes="Bold" 
+                                       TextColor="White">
+                                    <Label.Text>
+                                        <MultiBinding StringFormat="{}{0} {1}">
+                                            <Binding Path="Distance"/>
+                                            <Binding Path="[KilometersLabel]"
+                                                     Source="{x:Static helpers:LocalizationResourceManager.Instance}" />
+                                        </MultiBinding>
+                                    </Label.Text>
+                                </Label>
                             </StackLayout>
                         </Frame>
 
                         <Frame Grid.Column="1" BackgroundColor="#4D397E" CornerRadius="16" Padding="16">
                             <StackLayout>
-                                <Label Text="Время в пути" FontSize="12" TextColor="#EEEEEE" />
-                                <Label Text="{Binding Duration, StringFormat='{0} мин'}"
-                           FontSize="22" FontAttributes="Bold" TextColor="White" />
+                                <Label Text="{Binding [TravelTimeLabel], Source={x:Static helpers:LocalizationResourceManager.Instance}}" FontSize="12" TextColor="#EEEEEE" />
+                                <Label
+                                    FontSize="22"
+                                    FontAttributes="Bold"
+                                    TextColor="White">
+                                    <Label.Text>
+                                        <MultiBinding StringFormat="{}{0} {1}">
+                                            <Binding Path="Duration"/>
+                                            <Binding Path="[MinutesLabel]"
+                                                     Source="{x:Static helpers:LocalizationResourceManager.Instance}" />
+                                        </MultiBinding>
+                                    </Label.Text>
+                                </Label>
+                                
                             </StackLayout>
                         </Frame>
                     </Grid>
 
                     <Grid Grid.Row="3" ColumnDefinitions="auto,*" ColumnSpacing="10">
-                        <Button Grid.Column="0" Text="Показать маршрут" FontSize="15" BackgroundColor="#7B68EE" Clicked="OnShowRouteClicked"/>
+                        <Button Grid.Column="0" Text="{Binding [ShowRouteLabel], Source={x:Static helpers:LocalizationResourceManager.Instance}}" FontSize="15" BackgroundColor="#7B68EE" Clicked="OnShowRouteClicked"/>
                         <Button Grid.Column="1" Text="{Binding StartButtonText}" FontSize="15" BackgroundColor="#047A04" Clicked="OnStartRouteClicked"/>
                     </Grid>
 
@@ -160,13 +175,8 @@
             </Frame>
 
             <!-- Кнопки -->
-            <Button Text="Статистика" 
-                    Clicked="OnStatisticsClicked" 
-                    BackgroundColor="#333333" 
-                    TextColor="White"
-                    CornerRadius="12" />
 
-            <Button Text="Выйти" 
+            <Button Text="{Binding [ExitButton], Source={x:Static helpers:LocalizationResourceManager.Instance}}" 
                     Clicked="OnLogoutClicked" 
                     BackgroundColor="#D32F2F" 
                     TextColor="White"

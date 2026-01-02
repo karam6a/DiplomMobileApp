@@ -61,6 +61,15 @@ namespace LogisticMobileApp.Resources.Strings {
         }
         
         /// <summary>
+        ///   Ищет локализованную строку, похожую на Активный маршрут.
+        /// </summary>
+        public static string Active_Route_Label {
+            get {
+                return ResourceManager.GetString("Active_Route_Label", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Ищет локализованную строку, похожую на Логистика мусора.
         /// </summary>
         public static string App_Name {
@@ -160,6 +169,15 @@ namespace LogisticMobileApp.Resources.Strings {
         }
         
         /// <summary>
+        ///   Ищет локализованную строку, похожую на Продолжить.
+        /// </summary>
+        public static string ContinueButtonText {
+            get {
+                return ResourceManager.GetString("ContinueButtonText", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Ищет локализованную строку, похожую на Рабочая панель.
         /// </summary>
         public static string Dashboard_Title {
@@ -169,11 +187,56 @@ namespace LogisticMobileApp.Resources.Strings {
         }
         
         /// <summary>
+        ///   Ищет локализованную строку, похожую на Расстояние.
+        /// </summary>
+        public static string Distance_Label {
+            get {
+                return ResourceManager.GetString("Distance_Label", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на Водитель.
+        /// </summary>
+        public static string Driver_Label {
+            get {
+                return ResourceManager.GetString("Driver_Label", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на Активен.
+        /// </summary>
+        public static string DriverActiveLabel {
+            get {
+                return ResourceManager.GetString("DriverActiveLabel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на Неактивен.
+        /// </summary>
+        public static string DriverInactiveLabel {
+            get {
+                return ResourceManager.GetString("DriverInactiveLabel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Ищет локализованную строку, похожую на Email.
         /// </summary>
         public static string EmailPlaceholder {
             get {
                 return ResourceManager.GetString("EmailPlaceholder", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на Выйти.
+        /// </summary>
+        public static string ExitButton {
+            get {
+                return ResourceManager.GetString("ExitButton", resourceCulture);
             }
         }
         
@@ -192,6 +255,15 @@ namespace LogisticMobileApp.Resources.Strings {
         public static string GoToRegisterLink {
             get {
                 return ResourceManager.GetString("GoToRegisterLink", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на км.
+        /// </summary>
+        public static string KilometersLabel {
+            get {
+                return ResourceManager.GetString("KilometersLabel", resourceCulture);
             }
         }
         
@@ -309,6 +381,15 @@ namespace LogisticMobileApp.Resources.Strings {
         public static string Logout_Yes {
             get {
                 return ResourceManager.GetString("Logout_Yes", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на мин.
+        /// </summary>
+        public static string MinutesLabel {
+            get {
+                return ResourceManager.GetString("MinutesLabel", resourceCulture);
             }
         }
         
@@ -475,6 +556,33 @@ namespace LogisticMobileApp.Resources.Strings {
         }
         
         /// <summary>
+        ///   Ищет локализованную строку, похожую на Показать маршрут.
+        /// </summary>
+        public static string ShowRouteLabel {
+            get {
+                return ResourceManager.GetString("ShowRouteLabel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на Начать.
+        /// </summary>
+        public static string StartButtonText {
+            get {
+                return ResourceManager.GetString("StartButtonText", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на Маршрут начат!.
+        /// </summary>
+        public static string StartRouteToast {
+            get {
+                return ResourceManager.GetString("StartRouteToast", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Ищет локализованную строку, похожую на Статистика.
         /// </summary>
         public static string Statistics_Button {
@@ -498,6 +606,15 @@ namespace LogisticMobileApp.Resources.Strings {
         public static string Theme_Light {
             get {
                 return ResourceManager.GetString("Theme_Light", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на Время в пути.
+        /// </summary>
+        public static string TravelTimeLabel {
+            get {
+                return ResourceManager.GetString("TravelTimeLabel", resourceCulture);
             }
         }
     }

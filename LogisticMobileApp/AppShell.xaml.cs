@@ -20,7 +20,7 @@ public partial class AppShell : Shell
         Resources["Menu_Register"] = loc["Register_Title"];
         Resources["Menu_Dashboard"] = loc["Dashboard_Title"];
         Resources["Menu_Settings"] = loc["Settings_Title"];
-        Resources["Menu_Routes"] = loc["Routes_Title"];
+
         Resources["Menu_Confirm"] = loc["ConfirmRoute_Title"];
     }
 }

@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:mapsui="clr-namespace:Mapsui.UI.Maui;assembly=Mapsui.UI.Maui"
+             xmlns:helpers="clr-namespace:LogisticMobileApp.Helpers"
+             x:Class="LogisticMobileApp.Pages.MapPage"
+             Title="{Binding [Map_Title], Source={x:Static helpers:LocalizationResourceManager.Instance}}">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- Карта Mapsui -->
+        <mapsui:MapControl x:Name="MapControl" Grid.Row="0" />
+
+        <!-- Панель с кнопками управления -->
+        <HorizontalStackLayout Grid.Row="1" 
+                               Spacing="10" 
+                               Padding="15"
+                               HorizontalOptions="Center"
+                               BackgroundColor="{AppThemeBinding Light=#F5F5F5, Dark=#1E1E1E}">
+            
+            <Button Text="{Binding [Map_CenterRoute], Source={x:Static helpers:LocalizationResourceManager.Instance}}"
+                    BackgroundColor="#1976D2"
+                    TextColor="White"
+                    CornerRadius="8"
+                    Clicked="OnCenterRouteClicked" />
+
+            <Button Text="{Binding [Map_MyLocation], Source={x:Static helpers:LocalizationResourceManager.Instance}}"
+                    BackgroundColor="#388E3C"
+                    TextColor="White"
+                    CornerRadius="8"
+                    Clicked="OnMyLocationClicked" />
+        </HorizontalStackLayout>
+
+        <!-- Индикатор загрузки -->
+        <ActivityIndicator x:Name="LoadingIndicator"
+                           Grid.Row="0"
+                           IsRunning="False"
+                           IsVisible="False"
+                           Color="#1976D2"
+                           VerticalOptions="Center"
+                           HorizontalOptions="Center" />
+    </Grid>
+</ContentPage>
+

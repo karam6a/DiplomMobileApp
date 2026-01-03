@@ -5,6 +5,7 @@ using LogisticMobileApp.Pages;
 using ZXing.Net.Maui.Controls;
 using LogisticMobileApp.Services;
 using CommunityToolkit.Maui;
+using SkiaSharp.Views.Maui.Controls.Hosting;
 
 
 #if ANDROID
@@ -24,6 +25,7 @@ public static class MauiProgram
 			.UseMauiApp<App>()
 			.UseBarcodeReader()
             .UseMauiCommunityToolkit()
+            .UseSkiaSharp()
             .ConfigureFonts(fonts =>
 			{
 				fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");

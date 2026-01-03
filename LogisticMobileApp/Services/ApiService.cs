@@ -16,6 +16,7 @@ namespace LogisticMobileApp.Services
         private const string DriverMyRouteEndpoint = "api/Drivers/my-routes";
         private const string DriverRouteStartEndpoint = "api/Drivers/route-start";
         private const string DriverRouteEndEndpoint = "api/Drivers/route-end";
+        private const string DriverAddNoteEndpoint = "api/Drivers/add-note";
             
         public ApiService()
         {
@@ -238,6 +239,47 @@ namespace LogisticMobileApp.Services
             catch (Exception ex)
             {
                 throw new Exception($"Не удалось завершить маршрут: {ex.Message}", ex);
+            }
+        }
+
+        public async Task<bool> AddNoteAsync(int clientId, string notesAboutProblems, CancellationToken ct = default)
+        {
+            try
+            {
+                await AddAuthorizationHeaderAsync();
+
+                var request = new
+                {
+                    client_id = clientId,
+                    notes_about_problems = notesAboutProblems
+                };
+
+                var response = await _http.PostAsJsonAsync(DriverAddNoteEndpoint, request, ct);
+
+                if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+                {
+                    var refreshed = await TryRefreshTokenAsync();
+                    if (refreshed)
+                    {
+                        return await AddNoteAsync(clientId, notesAboutProblems, ct);
+                    }
+                    else
+                    {
+                        throw new Exception("Сессия истекла. Требуется повторная активация.");
+                    }
+                }
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    var errorText = await response.Content.ReadAsStringAsync();
+                    throw new Exception($"Ошибка сервера: {response.StatusCode} — {errorText}");
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Не удалось отправить комментарий: {ex.Message}", ex);
             }
         }
     }

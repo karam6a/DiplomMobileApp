@@ -137,7 +137,7 @@
                                        TextColor="White">
                                     <Label.Text>
                                         <MultiBinding StringFormat="{}{0} {1}">
-                                            <Binding Path="Distance"/>
+                                            <Binding Path="[DistanceLabel]"/>
                                             <Binding Path="[KilometersLabel]"
                                                      Source="{x:Static helpers:LocalizationResourceManager.Instance}" />
                                         </MultiBinding>
@@ -181,6 +181,7 @@
                     BackgroundColor="#D32F2F" 
                     TextColor="White"
                     CornerRadius="12" />
+            
 
         </StackLayout>
     </ScrollView>

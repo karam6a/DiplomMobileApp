@@ -66,7 +66,7 @@ namespace LogisticMobileApp.Pages
             // Если маршрут уже начат — просто переходим на страницу подтверждения
             if (ViewModel.IsRouteStarted)
             {
-                var confirmPage = new ConfirmRoutePage(_apiService, ViewModel.MyRouteInfo.ClientsData);
+                var confirmPage = new ConfirmRoutePage(_apiService, ViewModel.MyRouteInfo.ClientsData, ViewModel.MyRouteInfo.GeometryJson);
                 await Navigation.PushAsync(confirmPage);
                 return;
             }
@@ -90,7 +90,7 @@ namespace LogisticMobileApp.Pages
                     await Toast.Make(AppResources.StartRouteToast, CommunityToolkit.Maui.Core.ToastDuration.Short).Show();
 
                     // Переходим на страницу подтверждения
-                    var confirmPage = new ConfirmRoutePage(_apiService, ViewModel.MyRouteInfo.ClientsData);
+                    var confirmPage = new ConfirmRoutePage(_apiService, ViewModel.MyRouteInfo.ClientsData, ViewModel.MyRouteInfo.GeometryJson);
                     await Navigation.PushAsync(confirmPage);
                 }
             }

@@ -303,4 +303,16 @@
   <data name="TravelTimeLabel" xml:space="preserve">
     <value>Время в пути</value>
   </data>
+  <data name="Map_Title" xml:space="preserve">
+    <value>Карта маршрута</value>
+  </data>
+  <data name="Map_RouteInfo" xml:space="preserve">
+    <value>Информация о маршруте</value>
+  </data>
+  <data name="Map_CenterRoute" xml:space="preserve">
+    <value>К маршруту</value>
+  </data>
+  <data name="Map_MyLocation" xml:space="preserve">
+    <value>Моё место</value>
+  </data>
 </root>

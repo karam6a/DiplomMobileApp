@@ -49,6 +49,7 @@ namespace LogisticMobileApp.Pages
         
         // Navigation mode
         private bool _isNavigationMode = false;
+        private bool _isTurnsListExpanded = false;
         private List<NavigationStep> _navigationSteps = new();
 
         public MapPage(List<ClientData> clientsData, string? geometryJson = null)
@@ -878,8 +879,9 @@ namespace LogisticMobileApp.Pages
                     // Показываем только маршрут от меня до первой точки
                     UpdateMapLayersNavigationOnly();
 
-                    // Центрируем карту на маршруте навигации
-                    CenterMapOnNavigationRoute();
+                    // Центрируем карту на моем местоположении
+                    MapControl.Map.Navigator.CenterOn(_myLocationPoint);
+                    MapControl.Map.Navigator.ZoomTo(5);
 
                     // Включаем режим навигации
                     EnableNavigationMode();
@@ -925,12 +927,15 @@ namespace LogisticMobileApp.Pages
         private void DisableNavigationMode()
         {
             _isNavigationMode = false;
+            _isTurnsListExpanded = false;
             
             // Показываем обычные кнопки
             NormalButtonsPanel.IsVisible = true;
             
-            // Скрываем панель навигации
+            // Скрываем панель навигации и список поворотов
             NavigationPanel.IsVisible = false;
+            TurnsListPanel.IsVisible = false;
+            TurnsExpandIcon.Text = "▲";
             
             // Возвращаем полный маршрут
             UpdateMapLayers();
@@ -977,6 +982,133 @@ namespace LogisticMobileApp.Pages
                 NavigationDistanceLabel.Text = "";
                 NavigationStreetLabel.Text = "";
             }
+        }
+
+        private void OnNavigationInfoTapped(object? sender, TappedEventArgs e)
+        {
+            _isTurnsListExpanded = !_isTurnsListExpanded;
+            
+            if (_isTurnsListExpanded)
+            {
+                PopulateTurnsList();
+                TurnsListPanel.IsVisible = true;
+                TurnsExpandIcon.Text = "▼";
+            }
+            else
+            {
+                TurnsListPanel.IsVisible = false;
+                TurnsExpandIcon.Text = "▲";
+            }
+        }
+
+        private void PopulateTurnsList()
+        {
+            TurnsListContainer.Children.Clear();
+            
+            if (_navigationSteps.Count == 0)
+                return;
+            
+            var lang = Preferences.Get("Language", System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName);
+            
+            // Создаём список поворотов в обратном порядке (снизу вверх)
+            var reversedSteps = _navigationSteps.AsEnumerable().Reverse().ToList();
+            
+            foreach (var step in reversedSteps)
+            {
+                // Пропускаем depart и arrive если нужно
+                if (step.ManeuverType == "depart" && _navigationSteps.Count > 1)
+                    continue;
+                
+                var turnItem = CreateTurnListItem(step, lang);
+                TurnsListContainer.Children.Add(turnItem);
+            }
+        }
+
+        private View CreateTurnListItem(NavigationStep step, string lang)
+        {
+            var grid = new Grid
+            {
+                ColumnDefinitions = new ColumnDefinitionCollection
+                {
+                    new ColumnDefinition(new GridLength(40)),
+                    new ColumnDefinition(GridLength.Star),
+                    new ColumnDefinition(GridLength.Auto)
+                },
+                ColumnSpacing = 10,
+                Padding = new Thickness(8, 6)
+            };
+            
+            // Иконка направления
+            var iconBorder = new Border
+            {
+                WidthRequest = 32,
+                HeightRequest = 32,
+                StrokeShape = new Microsoft.Maui.Controls.Shapes.RoundRectangle { CornerRadius = 16 },
+                StrokeThickness = 0,
+                BackgroundColor = step.ManeuverType == "arrive" 
+                    ? Microsoft.Maui.Graphics.Color.FromArgb("#4CAF50") 
+                    : Microsoft.Maui.Graphics.Color.FromArgb("#FF5722"),
+                VerticalOptions = LayoutOptions.Center,
+                HorizontalOptions = LayoutOptions.Center,
+                Content = new Label
+                {
+                    Text = step.DirectionIcon,
+                    TextColor = Colors.White,
+                    FontSize = 16,
+                    HorizontalOptions = LayoutOptions.Center,
+                    VerticalOptions = LayoutOptions.Center
+                }
+            };
+            Grid.SetColumn(iconBorder, 0);
+            grid.Children.Add(iconBorder);
+            
+            // Инструкция и улица
+            var textStack = new VerticalStackLayout
+            {
+                VerticalOptions = LayoutOptions.Center,
+                Spacing = 1
+            };
+            
+            textStack.Children.Add(new Label
+            {
+                Text = step.GetDescription(lang),
+                FontSize = 13,
+                FontAttributes = FontAttributes.Bold,
+                TextColor = Application.Current?.RequestedTheme == AppTheme.Dark 
+                    ? Colors.White 
+                    : Microsoft.Maui.Graphics.Color.FromArgb("#212121"),
+                LineBreakMode = LineBreakMode.TailTruncation
+            });
+            
+            if (!string.IsNullOrEmpty(step.StreetName))
+            {
+                textStack.Children.Add(new Label
+                {
+                    Text = step.StreetName,
+                    FontSize = 11,
+                    TextColor = Application.Current?.RequestedTheme == AppTheme.Dark 
+                        ? Microsoft.Maui.Graphics.Color.FromArgb("#AAAAAA") 
+                        : Microsoft.Maui.Graphics.Color.FromArgb("#757575"),
+                    LineBreakMode = LineBreakMode.TailTruncation
+                });
+            }
+            
+            Grid.SetColumn(textStack, 1);
+            grid.Children.Add(textStack);
+            
+            // Расстояние
+            var distanceLabel = new Label
+            {
+                Text = step.GetFormattedDistance(lang),
+                FontSize = 12,
+                TextColor = Microsoft.Maui.Graphics.Color.FromArgb("#FF5722"),
+                FontAttributes = FontAttributes.Bold,
+                VerticalOptions = LayoutOptions.Center
+            };
+            Grid.SetColumn(distanceLabel, 2);
+            grid.Children.Add(distanceLabel);
+            
+            return grid;
         }
 
         private void UpdateMapLayersNavigationOnly()

@@ -52,7 +52,7 @@
                                  Color="{AppThemeBinding Light=#CCCCCC, Dark=#555555}"
                                  HorizontalOptions="Center" />
                         <Label x:Name="SwipeHintLabel"
-                               Text="↑ Нажмите для списка точек"
+                               Text="{Binding [Map_TapToExpand], Source={x:Static helpers:LocalizationResourceManager.Instance}}"
                                FontSize="12"
                                TextColor="{AppThemeBinding Light=#888888, Dark=#AAAAAA}"
                                HorizontalOptions="Center"
@@ -60,11 +60,13 @@
                     </VerticalStackLayout>
                 </Grid>
 
-                <!-- Кнопки управления -->
-                <HorizontalStackLayout Grid.Row="1" 
+                <!-- Кнопки управления (обычный режим) -->
+                <HorizontalStackLayout x:Name="NormalButtonsPanel"
+                                       Grid.Row="1" 
                                        Spacing="10" 
                                        Padding="15,5,15,15"
-                                       HorizontalOptions="Center">
+                                       HorizontalOptions="Center"
+                                       IsVisible="True">
                     
                     <Button Text="{Binding [Map_CenterRoute], Source={x:Static helpers:LocalizationResourceManager.Instance}}"
                             BackgroundColor="#1976D2"
@@ -79,7 +81,88 @@
                             CornerRadius="8"
                             HeightRequest="44"
                             Clicked="OnMyLocationClicked" />
+
+                    <Button Text="{Binding [Map_Navigate], Source={x:Static helpers:LocalizationResourceManager.Instance}}"
+                            BackgroundColor="#FF5722"
+                            TextColor="White"
+                            CornerRadius="8"
+                            HeightRequest="44"
+                            Clicked="OnNavigateClicked" />
                 </HorizontalStackLayout>
+                
+                <!-- Панель навигации (режим навигации) -->
+                <Grid x:Name="NavigationPanel"
+                      Grid.Row="1"
+                      Padding="10,5,10,10"
+                      ColumnDefinitions="Auto,*"
+                      ColumnSpacing="10"
+                      IsVisible="False">
+                    
+                    <!-- Кнопка Назад -->
+                    <Button x:Name="BackButton"
+                            Grid.Column="0"
+                            Text="{Binding [Map_Back], Source={x:Static helpers:LocalizationResourceManager.Instance}}"
+                            BackgroundColor="#757575"
+                            TextColor="White"
+                            CornerRadius="8"
+                            HeightRequest="60"
+                            WidthRequest="80"
+                            FontSize="13"
+                            Clicked="OnBackFromNavigationClicked" />
+                    
+                    <!-- Информация о следующем повороте -->
+                    <Border Grid.Column="1"
+                            StrokeShape="RoundRectangle 12"
+                            Stroke="{AppThemeBinding Light=#E0E0E0, Dark=#404040}"
+                            StrokeThickness="1"
+                            BackgroundColor="{AppThemeBinding Light=#F5F5F5, Dark=#2A2A2A}"
+                            Padding="12,8">
+                        <Grid ColumnDefinitions="50,*" ColumnSpacing="10">
+                            
+                            <!-- Иконка направления -->
+                            <Border Grid.Column="0"
+                                    WidthRequest="46"
+                                    HeightRequest="46"
+                                    StrokeShape="RoundRectangle 23"
+                                    StrokeThickness="0"
+                                    BackgroundColor="#FF5722"
+                                    VerticalOptions="Center"
+                                    HorizontalOptions="Center">
+                                <Label x:Name="NavigationDirectionIcon"
+                                       Text="→"
+                                       TextColor="White"
+                                       FontSize="24"
+                                       HorizontalOptions="Center"
+                                       VerticalOptions="Center" />
+                            </Border>
+                            
+                            <!-- Текст инструкции -->
+                            <VerticalStackLayout Grid.Column="1" 
+                                                 VerticalOptions="Center"
+                                                 Spacing="2">
+                                <Label x:Name="NavigationInstructionLabel"
+                                       Text="Загрузка..."
+                                       FontSize="14"
+                                       FontAttributes="Bold"
+                                       TextColor="{AppThemeBinding Light=#212121, Dark=#FFFFFF}"
+                                       LineBreakMode="TailTruncation"
+                                       MaxLines="2" />
+                                <HorizontalStackLayout Spacing="8">
+                                    <Label x:Name="NavigationDistanceLabel"
+                                           Text=""
+                                           FontSize="13"
+                                           TextColor="#FF5722"
+                                           FontAttributes="Bold" />
+                                    <Label x:Name="NavigationStreetLabel"
+                                           Text=""
+                                           FontSize="12"
+                                           TextColor="{AppThemeBinding Light=#757575, Dark=#AAAAAA}"
+                                           LineBreakMode="TailTruncation" />
+                                </HorizontalStackLayout>
+                            </VerticalStackLayout>
+                        </Grid>
+                    </Border>
+                </Grid>
 
                 <!-- Список точек маршрута -->
                 <CollectionView x:Name="PointsCollectionView"

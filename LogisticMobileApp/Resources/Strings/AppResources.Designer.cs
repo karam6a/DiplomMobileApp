@@ -385,6 +385,78 @@ namespace LogisticMobileApp.Resources.Strings {
         }
         
         /// <summary>
+        ///   Ищет локализованную строку, похожую на Назад.
+        /// </summary>
+        public static string Map_Back {
+            get {
+                return ResourceManager.GetString("Map_Back", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на К маршруту.
+        /// </summary>
+        public static string Map_CenterRoute {
+            get {
+                return ResourceManager.GetString("Map_CenterRoute", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на Моё место.
+        /// </summary>
+        public static string Map_MyLocation {
+            get {
+                return ResourceManager.GetString("Map_MyLocation", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на Навигация.
+        /// </summary>
+        public static string Map_Navigate {
+            get {
+                return ResourceManager.GetString("Map_Navigate", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на Информация о маршруте.
+        /// </summary>
+        public static string Map_RouteInfo {
+            get {
+                return ResourceManager.GetString("Map_RouteInfo", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на ↓ Кликни, чтобы скрыть.
+        /// </summary>
+        public static string Map_TapToCollapse {
+            get {
+                return ResourceManager.GetString("Map_TapToCollapse", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на ↑ Кликни, чтобы показать точки.
+        /// </summary>
+        public static string Map_TapToExpand {
+            get {
+                return ResourceManager.GetString("Map_TapToExpand", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на Карта маршрута.
+        /// </summary>
+        public static string Map_Title {
+            get {
+                return ResourceManager.GetString("Map_Title", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Ищет локализованную строку, похожую на мин.
         /// </summary>
         public static string MinutesLabel {

@@ -1,4 +1,5 @@
 using LogisticMobileApp.Models;
+using LogisticMobileApp.Resources.Strings;
 using LogisticMobileApp.Services;
 using Mapsui;
 using Mapsui.Extensions;
@@ -45,6 +46,10 @@ namespace LogisticMobileApp.Pages
         private double _bottomSheetMaxHeight = 450;
         private double _bottomSheetCurrentHeight;
         private bool _isBottomSheetExpanded = false;
+        
+        // Navigation mode
+        private bool _isNavigationMode = false;
+        private List<NavigationStep> _navigationSteps = new();
 
         public MapPage(List<ClientData> clientsData, string? geometryJson = null)
         {
@@ -82,7 +87,7 @@ namespace LogisticMobileApp.Pages
             BottomSheet.HeightRequest = _bottomSheetMinHeight;
             PointsCollectionView.HeightRequest = 0;
             PointsCollectionView.IsVisible = false;
-            SwipeHintLabel.Text = "↑ Нажмите для списка точек";
+            SwipeHintLabel.Text = AppResources.Map_TapToExpand;
         }
 
         private void OnBottomSheetPanUpdated(object? sender, PanUpdatedEventArgs e)
@@ -101,13 +106,13 @@ namespace LogisticMobileApp.Pages
                     {
                         PointsCollectionView.IsVisible = true;
                         PointsCollectionView.HeightRequest = listHeight;
-                        SwipeHintLabel.Text = "↓ Нажмите для скрытия";
+                        SwipeHintLabel.Text = AppResources.Map_TapToCollapse;
                     }
                     else
                     {
                         PointsCollectionView.IsVisible = false;
                         PointsCollectionView.HeightRequest = 0;
-                        SwipeHintLabel.Text = "↑ Нажмите для списка точек";
+                        SwipeHintLabel.Text = AppResources.Map_TapToExpand;
                     }
                     break;
 
@@ -144,7 +149,7 @@ namespace LogisticMobileApp.Pages
         private void ExpandBottomSheet()
         {
             _isBottomSheetExpanded = true;
-            SwipeHintLabel.Text = "↓ Нажмите для скрытия";
+            SwipeHintLabel.Text = AppResources.Map_TapToCollapse;
             PointsCollectionView.IsVisible = true;
             
             var animation = new Animation(v => 
@@ -162,7 +167,7 @@ namespace LogisticMobileApp.Pages
         private void CollapseBottomSheet()
         {
             _isBottomSheetExpanded = false;
-            SwipeHintLabel.Text = "↑ Нажмите для списка точек";
+            SwipeHintLabel.Text = AppResources.Map_TapToExpand;
             
             var animation = new Animation(v => 
             {
@@ -204,7 +209,7 @@ namespace LogisticMobileApp.Pages
             {
                 // Центрируем карту на выбранной точке
                 MapControl.Map.Navigator.CenterOn(selectedPoint.MapPoint);
-                MapControl.Map.Navigator.ZoomTo(3000);
+                MapControl.Map.Navigator.ZoomTo(10);
                 
                 // Сворачиваем bottom sheet
                 CollapseBottomSheet();
@@ -807,7 +812,7 @@ namespace LogisticMobileApp.Pages
                     UpdateMapLayers();
 
                     MapControl.Map.Navigator.CenterOn(_myLocationPoint);
-                    MapControl.Map.Navigator.ZoomTo(2000);
+                    MapControl.Map.Navigator.ZoomTo(10);
                 }
                 else
                 {
@@ -833,24 +838,316 @@ namespace LogisticMobileApp.Pages
             }
         }
 
-        private void UpdateMapLayers()
+        private async void OnNavigateClicked(object sender, EventArgs e)
+        {
+            try
+            {
+                LoadingIndicator.IsRunning = true;
+                LoadingIndicator.IsVisible = true;
+
+                // Обновляем текущее местоположение
+                var status = await Permissions.CheckStatusAsync<Permissions.LocationWhenInUse>();
+                if (status != PermissionStatus.Granted)
+                {
+                    status = await Permissions.RequestAsync<Permissions.LocationWhenInUse>();
+                    if (status != PermissionStatus.Granted)
+                    {
+                        await DisplayAlert("Разрешение", "Для навигации необходимо разрешение на геолокацию", "OK");
+                        return;
+                    }
+                }
+
+                var location = await Geolocation.GetLocationAsync(new GeolocationRequest
+                {
+                    DesiredAccuracy = GeolocationAccuracy.High,
+                    Timeout = TimeSpan.FromSeconds(10)
+                });
+
+                if (location != null)
+                {
+                    _myLocationCoords = (location.Latitude, location.Longitude);
+                    var (x, y) = SphericalMercator.FromLonLat(location.Longitude, location.Latitude);
+                    _myLocationPoint = new MPoint(x, y);
+
+                    // Перестраиваем маршрут от моего местоположения до первой точки
+                    await BuildRouteFromMyLocationAsync();
+
+                    // Сохраняем навигационные шаги
+                    _navigationSteps = _routingService.LastNavigationSteps;
+
+                    // Показываем только маршрут от меня до первой точки
+                    UpdateMapLayersNavigationOnly();
+
+                    // Центрируем карту на маршруте навигации
+                    CenterMapOnNavigationRoute();
+
+                    // Включаем режим навигации
+                    EnableNavigationMode();
+                }
+                else
+                {
+                    await DisplayAlert("Ошибка", "Не удалось определить местоположение", "OK");
+                }
+            }
+            catch (FeatureNotSupportedException)
+            {
+                await DisplayAlert("Ошибка", "Геолокация не поддерживается на этом устройстве", "OK");
+            }
+            catch (PermissionException)
+            {
+                await DisplayAlert("Ошибка", "Нет разрешения на геолокацию", "OK");
+            }
+            catch (Exception ex)
+            {
+                await DisplayAlert("Ошибка", $"Ошибка навигации: {ex.Message}", "OK");
+            }
+            finally
+            {
+                LoadingIndicator.IsRunning = false;
+                LoadingIndicator.IsVisible = false;
+            }
+        }
+
+        private void EnableNavigationMode()
+        {
+            _isNavigationMode = true;
+            
+            // Скрываем обычные кнопки
+            NormalButtonsPanel.IsVisible = false;
+            
+            // Показываем панель навигации
+            NavigationPanel.IsVisible = true;
+            
+            // Обновляем информацию о навигации
+            UpdateNavigationInfo();
+        }
+
+        private void DisableNavigationMode()
+        {
+            _isNavigationMode = false;
+            
+            // Показываем обычные кнопки
+            NormalButtonsPanel.IsVisible = true;
+            
+            // Скрываем панель навигации
+            NavigationPanel.IsVisible = false;
+            
+            // Возвращаем полный маршрут
+            UpdateMapLayers();
+        }
+
+        private void OnBackFromNavigationClicked(object sender, EventArgs e)
+        {
+            DisableNavigationMode();
+            CenterMapOnRoute();
+        }
+
+        private void UpdateNavigationInfo()
+        {
+            // Получаем текущий язык
+            var lang = Preferences.Get("Language", System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName);
+            
+            if (_navigationSteps.Count > 0)
+            {
+                // Находим следующий актуальный шаг (пропускаем depart если есть следующий)
+                var stepIndex = 0;
+                if (_navigationSteps.Count > 1 && _navigationSteps[0].ManeuverType == "depart")
+                {
+                    stepIndex = 1;
+                }
+                
+                var nextStep = _navigationSteps[stepIndex];
+                
+                // Обновляем UI
+                NavigationDirectionIcon.Text = nextStep.DirectionIcon;
+                NavigationInstructionLabel.Text = nextStep.GetDescription(lang);
+                NavigationDistanceLabel.Text = nextStep.GetFormattedDistance(lang);
+                NavigationStreetLabel.Text = string.IsNullOrEmpty(nextStep.StreetName) ? "" : $"• {nextStep.StreetName}";
+            }
+            else
+            {
+                // Нет шагов навигации
+                NavigationDirectionIcon.Text = "🏁";
+                NavigationInstructionLabel.Text = lang switch
+                {
+                    "ru" => "Следуйте по маршруту",
+                    "en" => "Follow the route",
+                    _ => "Podążaj trasą"  // pl
+                };
+                NavigationDistanceLabel.Text = "";
+                NavigationStreetLabel.Text = "";
+            }
+        }
+
+        private void UpdateMapLayersNavigationOnly()
         {
             if (_map == null) return;
 
-            // Удаляем старые слои маршрута и моего местоположения
-            var layersToRemove = _map.Layers.Where(l => l.Name == "Route" || l.Name == "MyLocation").ToList();
+            // Удаляем ВСЕ слои кроме тайлов (MemoryLayer - это наши слои, тайлы - другой тип)
+            var layersToRemove = _map.Layers.Where(l => l is MemoryLayer).ToList();
             foreach (var layer in layersToRemove)
             {
                 _map.Layers.Remove(layer);
             }
 
-            // Добавляем обновлённые слои
+            // Добавляем только маршрут от моего местоположения до первой точки
+            var navigationRouteLayer = CreateNavigationRouteLayer();
+            if (navigationRouteLayer != null)
+            {
+                _map.Layers.Add(navigationRouteLayer);
+            }
+
+            // Добавляем маркер первой точки
+            var firstPointLayer = CreateFirstPointMarkerLayer();
+            if (firstPointLayer != null)
+            {
+                _map.Layers.Add(firstPointLayer);
+            }
+
+            // Добавляем маркер моего местоположения
+            var myLocationLayer = CreateMyLocationLayer();
+            if (myLocationLayer != null)
+            {
+                _map.Layers.Add(myLocationLayer);
+            }
+
+            _map.RefreshData();
+        }
+
+        private MemoryLayer? CreateNavigationRouteLayer()
+        {
+            if (_routeFromMyLocation.Count < 2 && _myLocationPoint == null)
+                return null;
+
+            var routePoints = new List<MPoint>();
+
+            if (_routeFromMyLocation.Count >= 2)
+            {
+                routePoints.AddRange(_routeFromMyLocation);
+            }
+            else if (_myLocationPoint != null && _markerPoints.Count > 0)
+            {
+                // Fallback: прямая линия от меня до первой точки
+                routePoints.Add(_myLocationPoint);
+                routePoints.Add(_markerPoints[0]);
+            }
+
+            if (routePoints.Count < 2)
+                return null;
+
+            var coordinates = routePoints
+                .Select(p => new Coordinate(p.X, p.Y))
+                .ToArray();
+
+            var lineString = new LineString(coordinates);
+            var feature = new GeometryFeature(lineString)
+            {
+                Styles = new List<IStyle>
+                {
+                    new VectorStyle
+                    {
+                        Line = new Pen(Color.FromArgb(255, 255, 87, 34), 6) // Оранжевый цвет для навигации
+                        {
+                            PenStyle = PenStyle.Solid,
+                            PenStrokeCap = PenStrokeCap.Round,
+                            StrokeJoin = StrokeJoin.Round
+                        }
+                    }
+                }
+            };
+
+            return new MemoryLayer
+            {
+                Name = "NavigationRoute",
+                Features = new[] { feature },
+                Style = null
+            };
+        }
+
+        private MemoryLayer? CreateFirstPointMarkerLayer()
+        {
+            if (_markerPoints.Count == 0 || _clientsData.Count == 0)
+                return null;
+
+            var firstPoint = _markerPoints[0];
+            var feature = new PointFeature(firstPoint)
+            {
+                Styles = new List<IStyle>
+                {
+                    // Зелёный круг для целевой точки
+                    new SymbolStyle
+                    {
+                        SymbolScale = 1.4,
+                        Fill = new Brush(Color.FromArgb(255, 76, 175, 80)), // Зелёный
+                        Outline = new Pen(Color.White, 3),
+                        SymbolType = SymbolType.Ellipse
+                    },
+                    // Номер внутри круга
+                    new LabelStyle
+                    {
+                        Text = "1",
+                        ForeColor = Color.White,
+                        BackColor = new Brush(Color.Transparent),
+                        Font = new Font { Size = 16, Bold = true },
+                        HorizontalAlignment = LabelStyle.HorizontalAlignmentEnum.Center,
+                        VerticalAlignment = LabelStyle.VerticalAlignmentEnum.Center,
+                        Offset = new Offset(0, 0)
+                    }
+                }
+            };
+
+            return new MemoryLayer
+            {
+                Name = "FirstPointMarker",
+                Features = new[] { feature },
+                Style = null
+            };
+        }
+
+        private void CenterMapOnNavigationRoute()
+        {
+            var allPoints = new List<MPoint>();
+
+            if (_myLocationPoint != null)
+                allPoints.Add(_myLocationPoint);
+
+            if (_routeFromMyLocation.Count > 0)
+                allPoints.AddRange(_routeFromMyLocation);
+            else if (_markerPoints.Count > 0)
+                allPoints.Add(_markerPoints[0]);
+
+            if (allPoints.Count > 0)
+            {
+                CenterMapOnAllPoints(allPoints);
+            }
+        }
+
+        private void UpdateMapLayers()
+        {
+            if (_map == null) return;
+
+            // Удаляем ВСЕ слои кроме тайлов (MemoryLayer - это наши слои, тайлы - другой тип)
+            var layersToRemove = _map.Layers.Where(l => l is MemoryLayer).ToList();
+            foreach (var layer in layersToRemove)
+            {
+                _map.Layers.Remove(layer);
+            }
+
+            // Добавляем слой маршрута
             var routeLayer = CreateRouteLayer();
             if (routeLayer != null)
             {
                 _map.Layers.Add(routeLayer);
             }
 
+            // Добавляем слой с маркерами клиентов
+            var markersLayer = CreateMarkersLayer();
+            if (markersLayer != null)
+            {
+                _map.Layers.Add(markersLayer);
+            }
+
+            // Добавляем маркер моего местоположения (поверх всего)
             var myLocationLayer = CreateMyLocationLayer();
             if (myLocationLayer != null)
             {

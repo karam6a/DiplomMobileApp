@@ -315,10 +315,16 @@
   <data name="Map_MyLocation" xml:space="preserve">
     <value>My Location</value>
   </data>
-  <data name="Map_TapToExpand" xml:space="preserve">
-    <value>↑ Tap to show point list</value>
+  <data name="Map_Navigate" xml:space="preserve">
+    <value>Navigate</value>
+  </data>
+  <data name="Map_Back" xml:space="preserve">
+    <value>Back</value>
   </data>
   <data name="Map_TapToCollapse" xml:space="preserve">
     <value>↓ Tap to hide</value>
+  </data>
+  <data name="Map_TapToExpand" xml:space="preserve">
+    <value>↑ Tap to show points</value>
   </data>
 </root>

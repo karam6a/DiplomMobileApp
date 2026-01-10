@@ -32,6 +32,7 @@ namespace LogisticMobileApp.Pages
         private readonly List<ClientData> _clientsData;
         private readonly string? _geometryJson;
         private readonly RoutingService _routingService;
+        private readonly ApiService _apiService;
         private readonly List<MPoint> _markerPoints = new();
         private readonly List<MPoint> _routeLinePoints = new();
         private readonly List<MPoint> _routeFromMyLocation = new();
@@ -52,12 +53,13 @@ namespace LogisticMobileApp.Pages
         private bool _isTurnsListExpanded = false;
         private List<NavigationStep> _navigationSteps = new();
 
-        public MapPage(List<ClientData> clientsData, string? geometryJson = null)
+        public MapPage(List<ClientData> clientsData, string? geometryJson = null, ApiService? apiService = null)
         {
             InitializeComponent();
             _clientsData = clientsData ?? new List<ClientData>();
             _geometryJson = geometryJson;
             _routingService = new RoutingService();
+            _apiService = apiService ?? App.Services.GetRequiredService<ApiService>();
             
             // Привязываем коллекцию к CollectionView
             PointsCollectionView.ItemsSource = _routePointItems;
@@ -920,6 +922,17 @@ namespace LogisticMobileApp.Pages
             // Показываем панель навигации
             NavigationPanel.IsVisible = true;
             
+            // Увеличиваем высоту BottomSheet для навигации
+            _bottomSheetMinHeight = 190;
+            BottomSheet.HeightRequest = _bottomSheetMinHeight;
+            _bottomSheetCurrentHeight = _bottomSheetMinHeight;
+            
+            // Убираем первую точку из списка (она отображается в панели навигации)
+            UpdateRoutePointsListForNavigation();
+            
+            // Заполняем информацию о точке назначения
+            UpdateDestinationInfo();
+            
             // Обновляем информацию о навигации
             UpdateNavigationInfo();
         }
@@ -937,8 +950,100 @@ namespace LogisticMobileApp.Pages
             TurnsListPanel.IsVisible = false;
             TurnsExpandIcon.Text = "▲";
             
+            // Восстанавливаем стандартную высоту BottomSheet
+            _bottomSheetMinHeight = 130;
+            BottomSheet.HeightRequest = _bottomSheetMinHeight;
+            _bottomSheetCurrentHeight = _bottomSheetMinHeight;
+            
+            // Восстанавливаем полный список точек
+            PopulateRoutePointsList();
+            
             // Возвращаем полный маршрут
             UpdateMapLayers();
+        }
+
+        private void UpdateRoutePointsListForNavigation()
+        {
+            _routePointItems.Clear();
+            
+            // Начинаем со второй точки (индекс 1), первая уже отображается в панели навигации
+            for (int i = 1; i < _clientsData.Count; i++)
+            {
+                var client = _clientsData[i];
+                MPoint? mapPoint = i < _markerPoints.Count ? _markerPoints[i] : null;
+                
+                _routePointItems.Add(new RoutePointItem
+                {
+                    Index = i + 1,
+                    Name = client.Name,
+                    Address = client.Address,
+                    MapPoint = mapPoint
+                });
+            }
+        }
+
+        private void UpdateDestinationInfo()
+        {
+            if (_clientsData.Count > 0)
+            {
+                var firstClient = _clientsData[0];
+                DestinationNameLabel.Text = firstClient.Name ?? "";
+                DestinationAddressLabel.Text = firstClient.Address ?? "";
+            }
+            else
+            {
+                DestinationNameLabel.Text = "";
+                DestinationAddressLabel.Text = "";
+            }
+        }
+
+        private async void OnConfirmPickUpClicked(object sender, EventArgs e)
+        {
+            // TODO: Реализовать подтверждение сбора
+            if (_clientsData.Count > 0)
+            {
+                var client = _clientsData[0];
+                await DisplayAlert(
+                    AppResources.ConfirmRoute_ConfirmButton, 
+                    $"{client.Name}\n{client.Address}", 
+                    "OK");
+            }
+        }
+
+        private async void OnDeniedPickUpClicked(object sender, EventArgs e)
+        {
+            if (_clientsData.Count == 0)
+                return;
+
+            var client = _clientsData[0];
+            
+            // Показываем диалог для ввода причины отказа
+            var comment = await DisplayPromptAsync(
+                AppResources.ConfirmRoute_RejectButton,
+                $"{client.Name}\n{client.Address}",
+                AppResources.ConfirmRoute_SendComment,
+                AppResources.Language_Cancel,
+                AppResources.ConfirmRoute_CommentPlaceholder,
+                maxLength: 500,
+                keyboard: Keyboard.Text);
+
+            if (string.IsNullOrWhiteSpace(comment))
+                return;
+
+            try
+            {
+                var result = await _apiService.AddNoteAsync(client.Id, comment);
+                if (result)
+                {
+                    await CommunityToolkit.Maui.Alerts.Toast
+                        .Make(AppResources.ConfirmRoute_SendComment + " ✓", CommunityToolkit.Maui.Core.ToastDuration.Short)
+                        .Show();
+                }
+            }
+            catch (Exception ex)
+            {
+                await DisplayAlert("Ошибка", ex.Message, "OK");
+            }
         }
 
         private void OnBackFromNavigationClicked(object sender, EventArgs e)

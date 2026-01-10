@@ -6,6 +6,7 @@ using LogisticMobileApp.Models;
 using LogisticMobileApp.Services;
 using CommunityToolkit.Maui.Alerts;
 using Microsoft.Maui.ApplicationModel;
+using LogisticMobileApp.Resources.Strings;
 
 namespace LogisticMobileApp.Pages
 {
@@ -49,7 +50,7 @@ namespace LogisticMobileApp.Pages
                     var result = await _apiService.AddNoteAsync(stop.Id, stop.Comment ?? string.Empty);
                     if (result)
                     {
-                        await Toast.Make("Комментарий отправлен!", CommunityToolkit.Maui.Core.ToastDuration.Short).Show();
+                        await Toast.Make(AppResources.ConfirmRoute_SendComment + " ✓", CommunityToolkit.Maui.Core.ToastDuration.Short).Show();
 
                     }
                 }

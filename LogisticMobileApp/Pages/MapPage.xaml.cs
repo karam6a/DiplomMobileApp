@@ -9,6 +9,7 @@ using Mapsui.Projections;
 using Mapsui.Styles;
 using Mapsui.Tiling;
 using NetTopologySuite.Geometries;
+using System.Collections.ObjectModel;
 using System.Text.Json;
 using Color = Mapsui.Styles.Color;
 using Brush = Mapsui.Styles.Brush;
@@ -16,18 +17,34 @@ using Font = Mapsui.Styles.Font;
 
 namespace LogisticMobileApp.Pages
 {
+    // Модель для отображения точки в списке
+    public class RoutePointItem
+    {
+        public int Index { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public string Address { get; set; } = string.Empty;
+        public MPoint? MapPoint { get; set; }
+    }
+
     public partial class MapPage : ContentPage
     {
         private readonly List<ClientData> _clientsData;
         private readonly string? _geometryJson;
         private readonly RoutingService _routingService;
         private readonly List<MPoint> _markerPoints = new();
-        private readonly List<MPoint> _routeLinePoints = new();       // Маршрут между клиентами
-        private readonly List<MPoint> _routeFromMyLocation = new();   // Маршрут от меня до первой точки
+        private readonly List<MPoint> _routeLinePoints = new();
+        private readonly List<MPoint> _routeFromMyLocation = new();
+        private readonly ObservableCollection<RoutePointItem> _routePointItems = new();
         private MPoint? _myLocationPoint;
         private (double lat, double lon)? _myLocationCoords;
         private Mapsui.Map? _map;
         private bool _isMapInitialized = false;
+        
+        // Bottom Sheet
+        private double _bottomSheetMinHeight = 130;
+        private double _bottomSheetMaxHeight = 450;
+        private double _bottomSheetCurrentHeight;
+        private bool _isBottomSheetExpanded = false;
 
         public MapPage(List<ClientData> clientsData, string? geometryJson = null)
         {
@@ -35,6 +52,9 @@ namespace LogisticMobileApp.Pages
             _clientsData = clientsData ?? new List<ClientData>();
             _geometryJson = geometryJson;
             _routingService = new RoutingService();
+            
+            // Привязываем коллекцию к CollectionView
+            PointsCollectionView.ItemsSource = _routePointItems;
         }
 
         protected override void OnAppearing()
@@ -44,11 +64,153 @@ namespace LogisticMobileApp.Pages
             if (!_isMapInitialized)
             {
                 _isMapInitialized = true;
+                
+                // Инициализируем bottom sheet
+                InitializeBottomSheet();
+                
                 Dispatcher.Dispatch(async () =>
                 {
                     await Task.Delay(100);
                     await InitializeMapAsync();
                 });
+            }
+        }
+
+        private void InitializeBottomSheet()
+        {
+            _bottomSheetCurrentHeight = _bottomSheetMinHeight;
+            BottomSheet.HeightRequest = _bottomSheetMinHeight;
+            PointsCollectionView.HeightRequest = 0;
+            PointsCollectionView.IsVisible = false;
+            SwipeHintLabel.Text = "↑ Нажмите для списка точек";
+        }
+
+        private void OnBottomSheetPanUpdated(object? sender, PanUpdatedEventArgs e)
+        {
+            switch (e.StatusType)
+            {
+                case GestureStatus.Running:
+                    // Вычисляем новую высоту
+                    var newHeight = _bottomSheetCurrentHeight - e.TotalY;
+                    newHeight = Math.Clamp(newHeight, _bottomSheetMinHeight, _bottomSheetMaxHeight);
+                    BottomSheet.HeightRequest = newHeight;
+                    
+                    // Показываем/скрываем список в зависимости от высоты
+                    var listHeight = newHeight - _bottomSheetMinHeight;
+                    if (listHeight > 20)
+                    {
+                        PointsCollectionView.IsVisible = true;
+                        PointsCollectionView.HeightRequest = listHeight;
+                        SwipeHintLabel.Text = "↓ Нажмите для скрытия";
+                    }
+                    else
+                    {
+                        PointsCollectionView.IsVisible = false;
+                        PointsCollectionView.HeightRequest = 0;
+                        SwipeHintLabel.Text = "↑ Нажмите для списка точек";
+                    }
+                    break;
+
+                case GestureStatus.Completed:
+                    // Фиксируем позицию
+                    _bottomSheetCurrentHeight = BottomSheet.HeightRequest;
+                    
+                    // Анимация до ближайшего состояния
+                    if (_bottomSheetCurrentHeight > (_bottomSheetMinHeight + _bottomSheetMaxHeight) / 2)
+                    {
+                        ExpandBottomSheet();
+                    }
+                    else
+                    {
+                        CollapseBottomSheet();
+                    }
+                    break;
+            }
+        }
+
+        private void OnDragHandleTapped(object? sender, TappedEventArgs e)
+        {
+            // Переключаем состояние bottom sheet по нажатию
+            if (_isBottomSheetExpanded)
+            {
+                CollapseBottomSheet();
+            }
+            else
+            {
+                ExpandBottomSheet();
+            }
+        }
+
+        private void ExpandBottomSheet()
+        {
+            _isBottomSheetExpanded = true;
+            SwipeHintLabel.Text = "↓ Нажмите для скрытия";
+            PointsCollectionView.IsVisible = true;
+            
+            var animation = new Animation(v => 
+            {
+                BottomSheet.HeightRequest = v;
+                PointsCollectionView.HeightRequest = v - _bottomSheetMinHeight;
+            }, BottomSheet.HeightRequest, _bottomSheetMaxHeight);
+            
+            animation.Commit(this, "ExpandSheet", 16, 250, Easing.CubicOut, (v, c) =>
+            {
+                _bottomSheetCurrentHeight = _bottomSheetMaxHeight;
+            });
+        }
+
+        private void CollapseBottomSheet()
+        {
+            _isBottomSheetExpanded = false;
+            SwipeHintLabel.Text = "↑ Нажмите для списка точек";
+            
+            var animation = new Animation(v => 
+            {
+                BottomSheet.HeightRequest = v;
+                var listHeight = v - _bottomSheetMinHeight;
+                PointsCollectionView.HeightRequest = Math.Max(0, listHeight);
+            }, BottomSheet.HeightRequest, _bottomSheetMinHeight);
+            
+            animation.Commit(this, "CollapseSheet", 16, 250, Easing.CubicOut, (v, c) =>
+            {
+                _bottomSheetCurrentHeight = _bottomSheetMinHeight;
+                PointsCollectionView.IsVisible = false;
+                PointsCollectionView.HeightRequest = 0;
+            });
+        }
+
+        private void PopulateRoutePointsList()
+        {
+            _routePointItems.Clear();
+            
+            for (int i = 0; i < _clientsData.Count; i++)
+            {
+                var client = _clientsData[i];
+                MPoint? mapPoint = i < _markerPoints.Count ? _markerPoints[i] : null;
+                
+                _routePointItems.Add(new RoutePointItem
+                {
+                    Index = i + 1,
+                    Name = client.Name,
+                    Address = client.Address,
+                    MapPoint = mapPoint
+                });
+            }
+        }
+
+        private void OnPointSelected(object? sender, SelectionChangedEventArgs e)
+        {
+            if (e.CurrentSelection.FirstOrDefault() is RoutePointItem selectedPoint && selectedPoint.MapPoint != null)
+            {
+                // Центрируем карту на выбранной точке
+                MapControl.Map.Navigator.CenterOn(selectedPoint.MapPoint);
+                MapControl.Map.Navigator.ZoomTo(3000);
+                
+                // Сворачиваем bottom sheet
+                CollapseBottomSheet();
+                
+                // Сбрасываем выделение
+                PointsCollectionView.SelectedItem = null;
             }
         }
 
@@ -77,6 +239,9 @@ namespace LogisticMobileApp.Pages
 
                 // Парсим координаты клиентов для маркеров
                 ParseClientCoordinates();
+
+                // Заполняем список точек для bottom sheet
+                PopulateRoutePointsList();
 
                 // Парсим готовый маршрут из сервера (если есть)
                 ParseGeometryJson();

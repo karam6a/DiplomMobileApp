@@ -99,11 +99,10 @@ public partial class DashboardViewModel : ObservableObject
                         Name = route.RouteName.Split(' ', StringSplitOptions.RemoveEmptyEntries)[1];
                         Status = route.Status;
 
-                        Distance = route.Distance.ToString();
+                        Distance = (route.Distance / 1000).ToString("F1");
                         Duration = route.Duration.ToString();
 
-                        //Distance = 54.7.ToString();
-                        //Duration = 87.4.ToString();
+
                         MyRouteInfo = route;
 
                         // Проверяем, начат ли маршрут

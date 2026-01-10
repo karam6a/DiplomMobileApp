@@ -6,43 +6,133 @@
              x:Class="LogisticMobileApp.Pages.MapPage"
              Title="{Binding [Map_Title], Source={x:Static helpers:LocalizationResourceManager.Instance}}">
 
-    <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="*" />
-            <RowDefinition Height="Auto" />
-        </Grid.RowDefinitions>
-
-        <!-- Карта Mapsui -->
-        <mapsui:MapControl x:Name="MapControl" Grid.Row="0" />
-
-        <!-- Панель с кнопками управления -->
-        <HorizontalStackLayout Grid.Row="1" 
-                               Spacing="10" 
-                               Padding="15"
-                               HorizontalOptions="Center"
-                               BackgroundColor="{AppThemeBinding Light=#F5F5F5, Dark=#1E1E1E}">
-            
-            <Button Text="{Binding [Map_CenterRoute], Source={x:Static helpers:LocalizationResourceManager.Instance}}"
-                    BackgroundColor="#1976D2"
-                    TextColor="White"
-                    CornerRadius="8"
-                    Clicked="OnCenterRouteClicked" />
-
-            <Button Text="{Binding [Map_MyLocation], Source={x:Static helpers:LocalizationResourceManager.Instance}}"
-                    BackgroundColor="#388E3C"
-                    TextColor="White"
-                    CornerRadius="8"
-                    Clicked="OnMyLocationClicked" />
-        </HorizontalStackLayout>
+    <Grid x:Name="MainGrid">
+        <!-- Карта Mapsui (на весь экран) -->
+        <mapsui:MapControl x:Name="MapControl" />
 
         <!-- Индикатор загрузки -->
         <ActivityIndicator x:Name="LoadingIndicator"
-                           Grid.Row="0"
                            IsRunning="False"
                            IsVisible="False"
                            Color="#1976D2"
                            VerticalOptions="Center"
                            HorizontalOptions="Center" />
+
+        <!-- Bottom Sheet -->
+        <Border x:Name="BottomSheet"
+                VerticalOptions="End"
+                StrokeShape="RoundRectangle 20,20,0,0"
+                Stroke="{AppThemeBinding Light=#E0E0E0, Dark=#333333}"
+                StrokeThickness="1"
+                BackgroundColor="{AppThemeBinding Light=#FFFFFF, Dark=#1E1E1E}">
+            
+            <Border.Shadow>
+                <Shadow Brush="Black" Offset="0,-2" Radius="10" Opacity="0.2" />
+            </Border.Shadow>
+            
+            <Grid RowDefinitions="Auto,Auto,*">
+                
+                <!-- Ручка для свайпа (область для перетаскивания) -->
+                <Grid x:Name="DragHandle" 
+                      Grid.Row="0" 
+                      Padding="0,8,0,5"
+                      BackgroundColor="Transparent">
+                    
+                    <Grid.GestureRecognizers>
+                        <PanGestureRecognizer PanUpdated="OnBottomSheetPanUpdated" />
+                        <TapGestureRecognizer Tapped="OnDragHandleTapped" />
+                    </Grid.GestureRecognizers>
+                    
+                    <VerticalStackLayout HorizontalOptions="Center" 
+                                         VerticalOptions="Center"
+                                         InputTransparent="True">
+                        <BoxView WidthRequest="50" 
+                                 HeightRequest="5" 
+                                 CornerRadius="2.5"
+                                 Color="{AppThemeBinding Light=#CCCCCC, Dark=#555555}"
+                                 HorizontalOptions="Center" />
+                        <Label x:Name="SwipeHintLabel"
+                               Text="↑ Нажмите для списка точек"
+                               FontSize="12"
+                               TextColor="{AppThemeBinding Light=#888888, Dark=#AAAAAA}"
+                               HorizontalOptions="Center"
+                               Margin="0,8,0,0" />
+                    </VerticalStackLayout>
+                </Grid>
+
+                <!-- Кнопки управления -->
+                <HorizontalStackLayout Grid.Row="1" 
+                                       Spacing="10" 
+                                       Padding="15,5,15,15"
+                                       HorizontalOptions="Center">
+                    
+                    <Button Text="{Binding [Map_CenterRoute], Source={x:Static helpers:LocalizationResourceManager.Instance}}"
+                            BackgroundColor="#1976D2"
+                            TextColor="White"
+                            CornerRadius="8"
+                            HeightRequest="44"
+                            Clicked="OnCenterRouteClicked" />
+
+                    <Button Text="{Binding [Map_MyLocation], Source={x:Static helpers:LocalizationResourceManager.Instance}}"
+                            BackgroundColor="#388E3C"
+                            TextColor="White"
+                            CornerRadius="8"
+                            HeightRequest="44"
+                            Clicked="OnMyLocationClicked" />
+                </HorizontalStackLayout>
+
+                <!-- Список точек маршрута -->
+                <CollectionView x:Name="PointsCollectionView"
+                                Grid.Row="2"
+                                Margin="10,0,10,10"
+                                SelectionMode="Single"
+                                SelectionChanged="OnPointSelected">
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate>
+                            <Border Margin="0,4" 
+                                    Padding="12" 
+                                    StrokeShape="RoundRectangle 10"
+                                    Stroke="{AppThemeBinding Light=#E0E0E0, Dark=#404040}"
+                                    StrokeThickness="1"
+                                    BackgroundColor="{AppThemeBinding Light=#F5F5F5, Dark=#2A2A2A}">
+                                <Grid ColumnDefinitions="40,*">
+                                    <!-- Номер точки -->
+                                    <Border Grid.Column="0"
+                                            WidthRequest="36"
+                                            HeightRequest="36"
+                                            StrokeShape="RoundRectangle 18"
+                                            StrokeThickness="0"
+                                            BackgroundColor="#D32F2F"
+                                            VerticalOptions="Center">
+                                        <Label Text="{Binding Index}"
+                                               TextColor="White"
+                                               FontAttributes="Bold"
+                                               FontSize="16"
+                                               HorizontalOptions="Center"
+                                               VerticalOptions="Center" />
+                                    </Border>
+                                    
+                                    <!-- Информация о клиенте -->
+                                    <VerticalStackLayout Grid.Column="1" 
+                                                         Spacing="2"
+                                                         Padding="10,0,0,0"
+                                                         VerticalOptions="Center">
+                                        <Label Text="{Binding Name}"
+                                               FontAttributes="Bold"
+                                               FontSize="15"
+                                               TextColor="{AppThemeBinding Light=#212121, Dark=#FFFFFF}"
+                                               LineBreakMode="TailTruncation" />
+                                        <Label Text="{Binding Address}"
+                                               FontSize="13"
+                                               TextColor="{AppThemeBinding Light=#757575, Dark=#AAAAAA}"
+                                               LineBreakMode="TailTruncation" />
+                                    </VerticalStackLayout>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+            </Grid>
+        </Border>
     </Grid>
 </ContentPage>
-

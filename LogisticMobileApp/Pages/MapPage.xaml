@@ -298,14 +298,26 @@
                                     Stroke="{AppThemeBinding Light=#E0E0E0, Dark=#404040}"
                                     StrokeThickness="1"
                                     BackgroundColor="{AppThemeBinding Light=#F5F5F5, Dark=#2A2A2A}">
-                                <Grid ColumnDefinitions="40,*">
+                                <Border.Triggers>
+                                    <DataTrigger TargetType="Border" Binding="{Binding IsConfirmed}" Value="True">
+                                        <Setter Property="BackgroundColor" Value="#C8E6C9" />
+                                        <Setter Property="Stroke" Value="#2E7D32" />
+                                        <Setter Property="StrokeThickness" Value="2" />
+                                    </DataTrigger>
+                                    <DataTrigger TargetType="Border" Binding="{Binding IsRejected}" Value="True">
+                                        <Setter Property="BackgroundColor" Value="#FFCDD2" />
+                                        <Setter Property="Stroke" Value="#C62828" />
+                                        <Setter Property="StrokeThickness" Value="2" />
+                                    </DataTrigger>
+                                </Border.Triggers>
+                                <Grid ColumnDefinitions="40,*,Auto">
                                     <!-- Номер точки -->
                                     <Border Grid.Column="0"
                                             WidthRequest="36"
                                             HeightRequest="36"
                                             StrokeShape="RoundRectangle 18"
                                             StrokeThickness="0"
-                                            BackgroundColor="#D32F2F"
+                                            BackgroundColor="{Binding StatusColor}"
                                             VerticalOptions="Center">
                                         <Label Text="{Binding Index}"
                                                TextColor="White"
@@ -330,6 +342,22 @@
                                                TextColor="{AppThemeBinding Light=#757575, Dark=#AAAAAA}"
                                                LineBreakMode="TailTruncation" />
                                     </VerticalStackLayout>
+                                    
+                                    <!-- Иконка статуса -->
+                                    <Label Grid.Column="2"
+                                           VerticalOptions="Center"
+                                           FontSize="18">
+                                        <Label.Triggers>
+                                            <DataTrigger TargetType="Label" Binding="{Binding IsConfirmed}" Value="True">
+                                                <Setter Property="Text" Value="✓" />
+                                                <Setter Property="TextColor" Value="#4CAF50" />
+                                            </DataTrigger>
+                                            <DataTrigger TargetType="Label" Binding="{Binding IsRejected}" Value="True">
+                                                <Setter Property="Text" Value="✗" />
+                                                <Setter Property="TextColor" Value="#D32F2F" />
+                                            </DataTrigger>
+                                        </Label.Triggers>
+                                    </Label>
                                 </Grid>
                             </Border>
                         </DataTemplate>

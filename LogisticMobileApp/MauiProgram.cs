@@ -37,6 +37,7 @@ public static class MauiProgram
             });
         builder.Services.AddSingleton(LocalizationResourceManager.Instance);
         builder.Services.AddSingleton<ApiService>();
+        builder.Services.AddSingleton<PickUpStatusService>();
         builder.Services.AddTransient<RegisterViewModel>();
         builder.Services.AddTransient<RoutesViewModel>();
         builder.Services.AddTransient<RoutesPage>();

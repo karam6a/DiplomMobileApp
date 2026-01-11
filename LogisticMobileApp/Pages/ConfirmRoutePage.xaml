@@ -41,10 +41,22 @@
         </Style>
     </ContentPage.Resources>
 
-    <ScrollView>
-    <VerticalStackLayout Padding="10" Spacing="10">
+    <Grid>
+        <!-- Индикатор загрузки -->
+        <ActivityIndicator x:Name="LoadingIndicator"
+                           IsRunning="True"
+                           IsVisible="True"
+                           Color="{AppThemeBinding Light=#388E3C, Dark=#4CAF50}"
+                           WidthRequest="50"
+                           HeightRequest="50"
+                           HorizontalOptions="Center"
+                           VerticalOptions="Center" />
 
-        <dx:DXCollectionView ItemsSource="{Binding Stops}" Margin="0,0,0,10">
+        <!-- Основной контент -->
+        <ScrollView x:Name="MainContent" IsVisible="False">
+            <VerticalStackLayout Padding="10" Spacing="10">
+
+                <dx:DXCollectionView ItemsSource="{Binding Stops}" Margin="0,0,0,10">
             <dx:DXCollectionView.ItemTemplate>
                 <DataTemplate>
                     <Frame Margin="0,8"
@@ -67,8 +79,24 @@
                         </Frame.Triggers>
 
                         <VerticalStackLayout Spacing="8">
-                            <Label Text="{Binding Name}" FontSize="18" FontAttributes="Bold"
-                                   Style="{StaticResource CardLabelStyle}" />
+                            <HorizontalStackLayout Spacing="8">
+                                <Border BackgroundColor="{AppThemeBinding Light=#388E3C, Dark=#4CAF50}"
+                                        WidthRequest="28"
+                                        HeightRequest="28"
+                                        StrokeShape="RoundRectangle 14"
+                                        StrokeThickness="0"
+                                        VerticalOptions="Center">
+                                    <Label Text="{Binding OriginalIndex}"
+                                           FontSize="14"
+                                           FontAttributes="Bold"
+                                           TextColor="White"
+                                           HorizontalOptions="Center"
+                                           VerticalOptions="Center" />
+                                </Border>
+                                <Label Text="{Binding Name}" FontSize="18" FontAttributes="Bold"
+                                       Style="{StaticResource CardLabelStyle}"
+                                       VerticalOptions="Center" />
+                            </HorizontalStackLayout>
                             <Label Text="{Binding Address}" FontSize="14"
                                    Style="{StaticResource MutedCardLabelStyle}" />
 
@@ -82,7 +110,16 @@
                                 </Label.FormattedText>
                             </Label>
 
+                            <!-- Кнопки видны только если точка не обработана -->
                             <HorizontalStackLayout Spacing="10">
+                                <HorizontalStackLayout.Triggers>
+                                    <DataTrigger TargetType="HorizontalStackLayout" Binding="{Binding IsConfirmed}" Value="True">
+                                        <Setter Property="IsVisible" Value="False" />
+                                    </DataTrigger>
+                                    <DataTrigger TargetType="HorizontalStackLayout" Binding="{Binding IsRejected}" Value="True">
+                                        <Setter Property="IsVisible" Value="False" />
+                                    </DataTrigger>
+                                </HorizontalStackLayout.Triggers>
                                 <Button Text="{Binding [ConfirmRoute_ConfirmButton], Source={x:Static helpers:LocalizationResourceManager.Instance}}"
                                         BackgroundColor="#388E3C"
                                         TextColor="White"
@@ -94,6 +131,24 @@
                                         TextColor="White"
                                         Command="{Binding Source={x:Reference Page}, Path=RejectCommand}"
                                         CommandParameter="{Binding .}" />
+                            </HorizontalStackLayout>
+                            
+                            <!-- Статус обработки для подтверждённых точек -->
+                            <HorizontalStackLayout Spacing="8" IsVisible="{Binding IsConfirmed}">
+                                <Image Source="confirm_pick_up_icon.svg" WidthRequest="20" HeightRequest="20" />
+                                <Label Text="{Binding [ConfirmRoute_StatusConfirmed], Source={x:Static helpers:LocalizationResourceManager.Instance}}"
+                                       FontSize="14"
+                                       TextColor="White"
+                                       VerticalOptions="Center" />
+                            </HorizontalStackLayout>
+                            
+                            <!-- Статус обработки для отклонённых точек -->
+                            <HorizontalStackLayout Spacing="8" IsVisible="{Binding IsRejected}">
+                                <Image Source="denied_pick_up_icon.svg" WidthRequest="20" HeightRequest="20" />
+                                <Label Text="{Binding [ConfirmRoute_StatusRejected], Source={x:Static helpers:LocalizationResourceManager.Instance}}"
+                                       FontSize="14"
+                                       TextColor="White"
+                                       VerticalOptions="Center" />
                             </HorizontalStackLayout>
 
                             <VerticalStackLayout IsVisible="{Binding IsRejected}" Spacing="6">
@@ -121,12 +176,13 @@
             </dx:DXCollectionView.ItemTemplate>
         </dx:DXCollectionView>
 
-        <Button Text="{Binding [ConfirmRoute_FinishRouteButton], Source={x:Static helpers:LocalizationResourceManager.Instance}}"
-                BackgroundColor="#1976D2"
-                TextColor="White"
-                FontAttributes="Bold"
-                IsVisible="{Binding AllFinished}"
-                Clicked="OnFinishRouteClicked" />
-    </VerticalStackLayout>
-    </ScrollView>
+                <Button Text="{Binding [ConfirmRoute_FinishRouteButton], Source={x:Static helpers:LocalizationResourceManager.Instance}}"
+                        BackgroundColor="#1976D2"
+                        TextColor="White"
+                        FontAttributes="Bold"
+                        IsVisible="{Binding AllFinished}"
+                        Clicked="OnFinishRouteClicked" />
+            </VerticalStackLayout>
+        </ScrollView>
+    </Grid>
 </ContentPage>

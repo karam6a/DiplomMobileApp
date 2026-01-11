@@ -18,6 +18,9 @@ namespace LogisticMobileApp.Pages
         private readonly ApiService _apiService;
         private readonly List<ClientData> _clientsData;
         private readonly string? _geometryJson;
+        private readonly PickUpStatusService _pickUpStatusService;
+        private readonly int _routeId;
+        private ConfirmRouteViewModel _viewModel;
 
         public ConfirmRoutePage(ApiService apiService, List<ClientData> clientsData, string? geometryJson = null)
         {
@@ -25,20 +28,31 @@ namespace LogisticMobileApp.Pages
             _apiService = apiService;
             _clientsData = clientsData;
             _geometryJson = geometryJson;
+            _pickUpStatusService = new PickUpStatusService();
+            _routeId = Preferences.Get("RouteId", 0);
 
-            ConfirmCommand = new Command<RouteStop>(stop =>
+            ConfirmCommand = new Command<RouteStop>(async stop =>
             {
                 if (stop == null) return;
                 stop.IsConfirmed = true;
                 stop.IsRejected = false;
                 stop.Comment = string.Empty;
+                
+                // Сохраняем статус локально
+                await _pickUpStatusService.ConfirmAsync(stop.Id, _routeId);
+                
+                // Пересортируем список
+                await ReorderStopsAsync();
             });
 
-            RejectCommand = new Command<RouteStop>(stop =>
+            RejectCommand = new Command<RouteStop>(async stop =>
             {
                 if (stop == null) return;
                 stop.IsRejected = true;
                 stop.IsConfirmed = false;
+                
+                // Сохраняем статус локально
+                await _pickUpStatusService.RejectAsync(stop.Id, _routeId, stop.Comment);
             });
 
             SendCommentCommand = new Command<RouteStop>(async stop =>
@@ -50,8 +64,13 @@ namespace LogisticMobileApp.Pages
                     var result = await _apiService.AddNoteAsync(stop.Id, stop.Comment ?? string.Empty);
                     if (result)
                     {
+                        // Обновляем локальный статус с комментарием
+                        await _pickUpStatusService.RejectAsync(stop.Id, _routeId, stop.Comment);
+                        
                         await Toast.Make(AppResources.ConfirmRoute_SendComment + " ✓", CommunityToolkit.Maui.Core.ToastDuration.Short).Show();
-
+                        
+                        // Пересортируем список
+                        await ReorderStopsAsync();
                     }
                 }
                 catch (Exception ex)
@@ -60,7 +79,61 @@ namespace LogisticMobileApp.Pages
                 }
             });
 
-            BindingContext = new ConfirmRouteViewModel(clientsData);
+            _viewModel = new ConfirmRouteViewModel(clientsData);
+            BindingContext = _viewModel;
+            
+            // Подписываемся на изменение IsLoading
+            _viewModel.PropertyChanged += ViewModel_PropertyChanged;
+        }
+        
+        private bool _isFirstAppearing = true;
+        
+        protected override async void OnAppearing()
+        {
+            base.OnAppearing();
+            
+            // Загружаем данные только при первом появлении страницы
+            if (_isFirstAppearing)
+            {
+                _isFirstAppearing = false;
+                
+                // Даём UI время отрисоваться перед загрузкой
+                await Task.Delay(50);
+                await _viewModel.LoadStopsAsync();
+            }
+        }
+        
+        private void ViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == nameof(ConfirmRouteViewModel.IsLoading))
+            {
+                MainThread.BeginInvokeOnMainThread(() =>
+                {
+                    LoadingIndicator.IsRunning = _viewModel.IsLoading;
+                    LoadingIndicator.IsVisible = _viewModel.IsLoading;
+                    MainContent.IsVisible = !_viewModel.IsLoading;
+                });
+            }
+        }
+        
+        /// <summary>
+        /// Пересортировывает список точек (обработанные вниз)
+        /// </summary>
+        private async Task ReorderStopsAsync()
+        {
+            await Task.Delay(300); // Небольшая задержка для визуального эффекта
+            
+            var sortedStops = _viewModel.Stops
+                .OrderBy(s => s.IsConfirmed || s.IsRejected)
+                .ThenBy(s => s.OriginalIndex)
+                .ToList();
+            
+            // Пересоздаём коллекцию в правильном порядке
+            _viewModel.Stops.Clear();
+            foreach (var stop in sortedStops)
+            {
+                _viewModel.Stops.Add(stop);
+            }
         }
 
         private async void OnFinishRouteClicked(object sender, EventArgs e)
@@ -70,6 +143,9 @@ namespace LogisticMobileApp.Pages
                 var result = await _apiService.EndRouteAsync();
                 if (result)
                 {
+                    // Очищаем локальные статусы
+                    await _pickUpStatusService.ClearRouteAsync(_routeId);
+                    
                     Preferences.Set("RouteStarted", false);
                     Preferences.Remove("RouteId");
                     Preferences.Remove("RouteStartTime");

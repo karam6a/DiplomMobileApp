@@ -333,4 +333,10 @@
   <data name="Dashboard_NoRouteMessage" xml:space="preserve">
     <value>No active route at the moment. Please contact the logistics manager.</value>
   </data>
+  <data name="ConfirmRoute_StatusConfirmed" xml:space="preserve">
+    <value>Confirmed</value>
+  </data>
+  <data name="ConfirmRoute_StatusRejected" xml:space="preserve">
+    <value>Rejected</value>
+  </data>
 </root>

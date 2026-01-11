@@ -2,7 +2,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using LogisticMobileApp.Models;
 using LogisticMobileApp.Services;
-using LogisticMobileApp.Helpers;
 using LogisticMobileApp.Resources.Strings;
 
 namespace LogisticMobileApp.ViewModels;
@@ -70,9 +69,6 @@ public partial class DashboardViewModel : ObservableObject
 
     [ObservableProperty]
     private bool hasNoRoute = false;
-
-    [ObservableProperty]
-    private string noRouteMessage = string.Empty;
 
     public DashboardViewModel(ApiService api)
     {
@@ -191,7 +187,5 @@ public partial class DashboardViewModel : ObservableObject
         Name = string.Empty;
         Distance = string.Empty;
         Duration = string.Empty;
-        
-        NoRouteMessage = AppResources.Dashboard_NoRouteMessage;
     }
 }

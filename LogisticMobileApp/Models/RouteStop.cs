@@ -9,6 +9,11 @@ namespace LogisticMobileApp.Models
         public string Name { get; set; } = "";
         public string Address { get; set; } = "";
         public int ContainerCount { get; set; }
+        
+        /// <summary>
+        /// Оригинальный индекс точки в маршруте (для сохранения порядка нумерации)
+        /// </summary>
+        public int OriginalIndex { get; set; }
 
         private bool _isRejected;
         public bool IsRejected

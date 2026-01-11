@@ -7,12 +7,31 @@ using System.Runtime.CompilerServices;
 using System.Windows.Input;
 using Microsoft.Maui.Controls;
 using LogisticMobileApp.Models;
+using LogisticMobileApp.Services;
 
 namespace LogisticMobileApp.ViewModels
 {
     public class ConfirmRouteViewModel : INotifyPropertyChanged
     {
         public ObservableCollection<RouteStop> Stops { get; }
+        
+        private readonly List<ClientData> _clientsData;
+        private readonly PickUpStatusService _pickUpStatusService;
+        private readonly int _routeId;
+
+        private bool _isLoading = true;
+        public bool IsLoading
+        {
+            get => _isLoading;
+            set
+            {
+                if (_isLoading != value)
+                {
+                    _isLoading = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
 
         /// <summary>
         /// Кнопка «Завершить маршрут» должна быть активна, когда все точки либо подтверждены, либо отклонены.
@@ -21,21 +40,66 @@ namespace LogisticMobileApp.ViewModels
 
         public ConfirmRouteViewModel(List<ClientData> clientsData)
         {
-            // Преобразуем ClientData в RouteStop для экрана подтверждения
-            Stops = new ObservableCollection<RouteStop>(
-                (clientsData ?? new List<ClientData>()).Select(c => new RouteStop
+            _clientsData = clientsData ?? new List<ClientData>();
+            _pickUpStatusService = new PickUpStatusService();
+            _routeId = Preferences.Get("RouteId", 0);
+            
+            Stops = new ObservableCollection<RouteStop>();
+            Stops.CollectionChanged += Stops_CollectionChanged;
+            
+            // НЕ загружаем данные в конструкторе - загрузка будет в OnAppearing
+        }
+        
+        /// <summary>
+        /// Асинхронно загружает точки с учётом локальных статусов
+        /// </summary>
+        public async Task LoadStopsAsync()
+        {
+            IsLoading = true;
+            
+            try
+            {
+                // Получаем сохранённые статусы
+                var statuses = await _pickUpStatusService.GetRouteStatusesAsync(_routeId);
+                var statusDict = statuses.ToDictionary(s => s.ClientId);
+                
+                // Создаём список RouteStop с применением статусов
+                var allStops = _clientsData.Select((c, index) => new RouteStop
                 {
                     Id = c.Id,
                     Name = c.Name,
                     Address = c.Address,
-                    ContainerCount = c.ContainerCount
-                }));
-
-            // следим за изменениями внутри элементов, чтобы обновлять AllFinished
-            foreach (var s in Stops)
-                SubscribeStop(s);
-
-            Stops.CollectionChanged += Stops_CollectionChanged;
+                    ContainerCount = c.ContainerCount,
+                    OriginalIndex = index + 1,
+                    IsConfirmed = statusDict.TryGetValue(c.Id, out var status) && status.IsConfirmed,
+                    IsRejected = statusDict.TryGetValue(c.Id, out status) && status.IsRejected,
+                    Comment = statusDict.TryGetValue(c.Id, out status) ? status.Comment : null
+                }).ToList();
+                
+                // Сортируем: сначала необработанные, потом обработанные
+                var sortedStops = allStops
+                    .OrderBy(s => s.IsConfirmed || s.IsRejected) // false < true
+                    .ThenBy(s => s.OriginalIndex)
+                    .ToList();
+                
+                // Очищаем и заполняем коллекцию
+                Stops.Clear();
+                foreach (var stop in sortedStops)
+                {
+                    SubscribeStop(stop);
+                    Stops.Add(stop);
+                }
+                
+                OnPropertyChanged(nameof(AllFinished));
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[ConfirmRouteViewModel] LoadStopsAsync error: {ex.Message}");
+            }
+            finally
+            {
+                IsLoading = false;
+            }
         }
 
         private void Stops_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)

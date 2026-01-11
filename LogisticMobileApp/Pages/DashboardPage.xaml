@@ -227,7 +227,7 @@
                                HorizontalOptions="Center" />
                         
                         <!-- Сообщение -->
-                        <Label Text="{Binding NoRouteMessage}"
+                        <Label Text="{Binding [Dashboard_NoRouteMessage], Source={x:Static helpers:LocalizationResourceManager.Instance}}"
                                FontSize="16"
                                TextColor="#AAAAAA"
                                HorizontalOptions="Center"

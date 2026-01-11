@@ -1140,6 +1140,14 @@ namespace LogisticMobileApp.Pages
         {
             _isNavigationMode = true;
             
+            // Сначала сворачиваем BottomSheet если он был развёрнут
+            if (_isBottomSheetExpanded)
+            {
+                _isBottomSheetExpanded = false;
+                PointsCollectionView.IsVisible = false;
+                PointsCollectionView.HeightRequest = 0;
+            }
+            
             // Скрываем обычные кнопки
             NormalButtonsPanel.IsVisible = false;
             
@@ -1162,12 +1170,20 @@ namespace LogisticMobileApp.Pages
             
             // Обновляем информацию о навигации
             UpdateNavigationInfo();
+            
+            // Обновляем текст подсказки
+            SwipeHintLabel.Text = AppResources.Map_TapToExpand;
         }
 
         private async void DisableNavigationMode()
         {
             _isNavigationMode = false;
             _isTurnsListExpanded = false;
+            
+            // Сначала скрываем и сбрасываем список точек
+            _isBottomSheetExpanded = false;
+            PointsCollectionView.IsVisible = false;
+            PointsCollectionView.HeightRequest = 0;
             
             // Показываем обычные кнопки
             NormalButtonsPanel.IsVisible = true;
@@ -1184,6 +1200,9 @@ namespace LogisticMobileApp.Pages
             
             // Опускаем плавающую кнопку ниже
             MyLocationFloatingButton.Margin = new Thickness(0, 0, 15, 145);
+            
+            // Обновляем текст подсказки
+            SwipeHintLabel.Text = AppResources.Map_TapToExpand;
             
             // Восстанавливаем полный список точек
             await PopulateRoutePointsListAsync();

@@ -213,6 +213,29 @@
                                            Margin="0,10,0,0" />
                     </VerticalStackLayout>
 
+                    <!-- НЕТ МАРШРУТА - показывается когда маршрут отсутствует -->
+                    <VerticalStackLayout Grid.Row="1" Grid.RowSpan="3"
+                                         Spacing="16"
+                                         IsVisible="{Binding HasNoRoute}"
+                                         VerticalOptions="Center"
+                                         HorizontalOptions="Center"
+                                         Padding="20">
+                        
+                        <!-- Иконка -->
+                        <Label Text="📋"
+                               FontSize="48"
+                               HorizontalOptions="Center" />
+                        
+                        <!-- Сообщение -->
+                        <Label Text="{Binding NoRouteMessage}"
+                               FontSize="16"
+                               TextColor="#AAAAAA"
+                               HorizontalOptions="Center"
+                               HorizontalTextAlignment="Center"
+                               LineBreakMode="WordWrap" />
+                        
+                    </VerticalStackLayout>
+
                     <!-- КОНТЕНТ - показывается после загрузки -->
                     <!-- Название маршрута -->
                     <Label Grid.Row="1"

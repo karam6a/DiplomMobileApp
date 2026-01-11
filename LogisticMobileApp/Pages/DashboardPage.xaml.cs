@@ -24,10 +24,13 @@ namespace LogisticMobileApp.Pages
             UpdateLanguage();
         }
 
-        protected override void OnAppearing()
+        protected override async void OnAppearing()
         {
             base.OnAppearing();
             UpdateLanguage();
+            
+            // Перезагружаем данные при возврате на страницу
+            await ViewModel.ReloadAsync();
         }
 
         private void UpdateLanguage()

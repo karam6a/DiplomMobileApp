@@ -68,13 +68,32 @@ public partial class DashboardViewModel : ObservableObject
     [ObservableProperty]
     private bool isRouteLoaded = false;
 
+    [ObservableProperty]
+    private bool hasNoRoute = false;
+
+    [ObservableProperty]
+    private string noRouteMessage = string.Empty;
+
     public DashboardViewModel(ApiService api)
     {
         _api = api;
         LoadDriverInfoAsync();
     }
 
+    /// <summary>
+    /// Перезагружает данные (вызывается при возврате на страницу)
+    /// </summary>
+    public async Task ReloadAsync()
+    {
+        await LoadDriverInfoInternalAsync();
+    }
+
     private async void LoadDriverInfoAsync()
+    {
+        await LoadDriverInfoInternalAsync();
+    }
+
+    private async Task LoadDriverInfoInternalAsync()
     {
         IsLoading = true;
         IsRouteLoading = true;
@@ -97,12 +116,13 @@ public partial class DashboardViewModel : ObservableObject
                 try
                 {
                     var route = await _api.GetMyRouteAsync();
-                    if (route != null)
+                    if (route != null && route.ClientsData != null && route.ClientsData.Count > 0)
                     {
                         LicensePlate = route.LicensePlate;
                         GeometryJson = route.GeometryJson;
 
-                        Name = route.RouteName.Split(' ', StringSplitOptions.RemoveEmptyEntries)[1];
+                        var nameParts = route.RouteName?.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                        Name = nameParts != null && nameParts.Length > 1 ? nameParts[1] : route.RouteName ?? "";
                         Status = route.Status;
 
                         Distance = (route.Distance / 1000).ToString("F1");
@@ -126,12 +146,18 @@ public partial class DashboardViewModel : ObservableObject
                         }
 
                         IsRouteLoaded = true;
+                        HasNoRoute = false;
+                    }
+                    else
+                    {
+                        // Маршрут отсутствует
+                        SetNoRouteState();
                     }
                 }
                 catch
                 {
                     // Маршрут может отсутствовать - это нормально
-                    LicensePlate = "AA 0000-0";
+                    SetNoRouteState();
                 }
                 finally
                 {
@@ -155,5 +181,17 @@ public partial class DashboardViewModel : ObservableObject
             IsLoading = false;
             IsRouteLoading = false;
         }
+    }
+
+    private void SetNoRouteState()
+    {
+        HasNoRoute = true;
+        IsRouteLoaded = false;
+        MyRouteInfo = null;
+        Name = string.Empty;
+        Distance = string.Empty;
+        Duration = string.Empty;
+        
+        NoRouteMessage = AppResources.Dashboard_NoRouteMessage;
     }
 }

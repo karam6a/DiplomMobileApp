@@ -178,6 +178,15 @@ namespace LogisticMobileApp.Resources.Strings {
         }
         
         /// <summary>
+        ///   Ищет локализованную строку, похожую на В данный момент маршрута нет. Обратитесь к логисту..
+        /// </summary>
+        public static string Dashboard_NoRouteMessage {
+            get {
+                return ResourceManager.GetString("Dashboard_NoRouteMessage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Ищет локализованную строку, похожую на Рабочая панель.
         /// </summary>
         public static string Dashboard_Title {

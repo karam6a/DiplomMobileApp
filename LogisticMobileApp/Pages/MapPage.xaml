@@ -322,7 +322,7 @@
                                 Margin="10,0,10,10"
                                 SelectionMode="None">
                     <dx:DXCollectionView.ItemTemplate>
-                        <DataTemplate>3
+                        <DataTemplate>
                             <Border Margin="0,4" 
                                     Padding="12,8" 
                                     StrokeShape="RoundRectangle 10"

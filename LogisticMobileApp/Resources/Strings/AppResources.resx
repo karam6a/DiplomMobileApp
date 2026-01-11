@@ -330,4 +330,7 @@
   <data name="Map_FinishRoute" xml:space="preserve">
     <value>Завершить</value>
   </data>
+  <data name="Dashboard_NoRouteMessage" xml:space="preserve">
+    <value>В данный момент маршрута нет. Обратитесь к логисту.</value>
+  </data>
 </root>

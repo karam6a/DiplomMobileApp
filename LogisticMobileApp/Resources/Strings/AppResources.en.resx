@@ -330,4 +330,7 @@
   <data name="Map_FinishRoute" xml:space="preserve">
     <value>Finish</value>
   </data>
+  <data name="Dashboard_NoRouteMessage" xml:space="preserve">
+    <value>No active route at the moment. Please contact the logistics manager.</value>
+  </data>
 </root>

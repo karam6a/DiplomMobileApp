@@ -330,4 +330,7 @@
   <data name="Map_FinishRoute" xml:space="preserve">
     <value>Zakońć</value>
   </data>
+  <data name="Dashboard_NoRouteMessage" xml:space="preserve">
+    <value>Brak aktywnej trasy. Skontaktuj się z logistykiem.</value>
+  </data>
 </root>

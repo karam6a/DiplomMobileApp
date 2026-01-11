@@ -2,7 +2,8 @@
 <Shell xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
        xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
        xmlns:pages="clr-namespace:LogisticMobileApp.Pages"
-       x:Class="LogisticMobileApp.AppShell">
+       x:Class="LogisticMobileApp.AppShell"
+       FlyoutBehavior="Disabled">
 
     <Shell.Resources>
         <x:String x:Key="Menu_Login">Вход</x:String>

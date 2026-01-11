@@ -1,4 +1,4 @@
-﻿// ViewModels/DashboardViewModel.cs
+// ViewModels/DashboardViewModel.cs
 using CommunityToolkit.Mvvm.ComponentModel;
 using LogisticMobileApp.Models;
 using LogisticMobileApp.Services;
@@ -62,6 +62,12 @@ public partial class DashboardViewModel : ObservableObject
     [ObservableProperty]
     private string startButtonText = "Начать";
 
+    [ObservableProperty]
+    private bool isRouteLoading = true;
+
+    [ObservableProperty]
+    private bool isRouteLoaded = false;
+
     public DashboardViewModel(ApiService api)
     {
         _api = api;
@@ -71,6 +77,8 @@ public partial class DashboardViewModel : ObservableObject
     private async void LoadDriverInfoAsync()
     {
         IsLoading = true;
+        IsRouteLoading = true;
+        IsRouteLoaded = false;
         ErrorMessage = string.Empty;
 
         try
@@ -79,20 +87,18 @@ public partial class DashboardViewModel : ObservableObject
 
             if (driver != null)
             {
+                DriverName = driver.Name;
+                DriverPhone = driver.Phone_number;
+                DriverStatus = driver.Is_active ? AppResources.DriverActiveLabel : AppResources.DriverInactiveLabel;
+                DriverStatusColor = driver.Is_active ? Colors.Green : Colors.Red;
+                IsLoading = false;
+
                 // Загружаем маршрут для получения номера машины
                 try
                 {
                     var route = await _api.GetMyRouteAsync();
                     if (route != null)
                     {
-                        IsLoading = false;
-
-                        DriverName = driver.Name;
-                        DriverPhone = driver.Phone_number;
-
-                        DriverStatus = driver.Is_active ? AppResources.DriverActiveLabel : AppResources.DriverInactiveLabel;
-                        DriverStatusColor = driver.Is_active ? Colors.Green : Colors.Red;
-
                         LicensePlate = route.LicensePlate;
                         GeometryJson = route.GeometryJson;
 
@@ -101,7 +107,6 @@ public partial class DashboardViewModel : ObservableObject
 
                         Distance = (route.Distance / 1000).ToString("F1");
                         Duration = (route.Duration / 60).ToString("F0");
-
 
                         MyRouteInfo = route;
 
@@ -119,12 +124,18 @@ public partial class DashboardViewModel : ObservableObject
                             IsRouteStarted = false;
                             StartButtonText = AppResources.StartButtonText;
                         }
+
+                        IsRouteLoaded = true;
                     }
                 }
                 catch
                 {
                     // Маршрут может отсутствовать - это нормально
                     LicensePlate = "AA 0000-0";
+                }
+                finally
+                {
+                    IsRouteLoading = false;
                 }
             }
             else
@@ -142,6 +153,7 @@ public partial class DashboardViewModel : ObservableObject
         finally
         {
             IsLoading = false;
+            IsRouteLoading = false;
         }
     }
 }

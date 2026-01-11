@@ -4,6 +4,7 @@
              xmlns:helpers="clr-namespace:LogisticMobileApp.Helpers"
              xmlns:dx="http://schemas.devexpress.com/maui"
              x:Class="LogisticMobileApp.Pages.RoutesPage"
+             Style="{StaticResource PageStyle}"
              Title="{Binding RouteName}">
 
     <Grid RowDefinitions="Auto,*">

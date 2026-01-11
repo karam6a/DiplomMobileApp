@@ -124,15 +124,107 @@
                            FontAttributes="Bold" 
                            TextColor="#AAAAAA" />
 
+                    <!-- SKELETON LOADER - показывается во время загрузки -->
+                    <VerticalStackLayout Grid.Row="1" Grid.RowSpan="3" 
+                                         Spacing="16"
+                                         IsVisible="{Binding IsRouteLoading}">
+                        
+                        <!-- Скелетон названия маршрута -->
+                        <Border BackgroundColor="#3A3A4A" 
+                                HeightRequest="20" 
+                                WidthRequest="150"
+                                HorizontalOptions="Start"
+                                StrokeShape="RoundRectangle 4"
+                                StrokeThickness="0">
+                            <Border.Behaviors>
+                                <toolkit:AnimationBehavior>
+                                    <toolkit:AnimationBehavior.AnimationType>
+                                        <toolkit:FadeAnimation Opacity="0.5" Length="800" Easing="{x:Static Easing.SinInOut}" />
+                                    </toolkit:AnimationBehavior.AnimationType>
+                                </toolkit:AnimationBehavior>
+                            </Border.Behaviors>
+                        </Border>
+
+                        <!-- Скелетон карточек расстояния и времени -->
+                        <Grid ColumnDefinitions="*,*" ColumnSpacing="30">
+                            <Border BackgroundColor="#3A3A4A" 
+                                    HeightRequest="80" 
+                                    StrokeShape="RoundRectangle 16"
+                                    StrokeThickness="0">
+                                <Border.Behaviors>
+                                    <toolkit:AnimationBehavior>
+                                        <toolkit:AnimationBehavior.AnimationType>
+                                            <toolkit:FadeAnimation Opacity="0.5" Length="800" Easing="{x:Static Easing.SinInOut}" />
+                                        </toolkit:AnimationBehavior.AnimationType>
+                                    </toolkit:AnimationBehavior>
+                                </Border.Behaviors>
+                            </Border>
+                            <Border Grid.Column="1" 
+                                    BackgroundColor="#3A3A4A" 
+                                    HeightRequest="80" 
+                                    StrokeShape="RoundRectangle 16"
+                                    StrokeThickness="0">
+                                <Border.Behaviors>
+                                    <toolkit:AnimationBehavior>
+                                        <toolkit:AnimationBehavior.AnimationType>
+                                            <toolkit:FadeAnimation Opacity="0.5" Length="800" Easing="{x:Static Easing.SinInOut}" />
+                                        </toolkit:AnimationBehavior.AnimationType>
+                                    </toolkit:AnimationBehavior>
+                                </Border.Behaviors>
+                            </Border>
+                        </Grid>
+
+                        <!-- Скелетон кнопок -->
+                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                            <Border BackgroundColor="#3A3A4A" 
+                                    HeightRequest="44" 
+                                    WidthRequest="120"
+                                    StrokeShape="RoundRectangle 8"
+                                    StrokeThickness="0">
+                                <Border.Behaviors>
+                                    <toolkit:AnimationBehavior>
+                                        <toolkit:AnimationBehavior.AnimationType>
+                                            <toolkit:FadeAnimation Opacity="0.5" Length="800" Easing="{x:Static Easing.SinInOut}" />
+                                        </toolkit:AnimationBehavior.AnimationType>
+                                    </toolkit:AnimationBehavior>
+                                </Border.Behaviors>
+                            </Border>
+                            <Border Grid.Column="1" 
+                                    BackgroundColor="#3A3A4A" 
+                                    HeightRequest="44" 
+                                    StrokeShape="RoundRectangle 8"
+                                    StrokeThickness="0">
+                                <Border.Behaviors>
+                                    <toolkit:AnimationBehavior>
+                                        <toolkit:AnimationBehavior.AnimationType>
+                                            <toolkit:FadeAnimation Opacity="0.5" Length="800" Easing="{x:Static Easing.SinInOut}" />
+                                        </toolkit:AnimationBehavior.AnimationType>
+                                    </toolkit:AnimationBehavior>
+                                </Border.Behaviors>
+                            </Border>
+                        </Grid>
+
+                        <!-- Индикатор загрузки по центру -->
+                        <ActivityIndicator IsRunning="True"
+                                           Color="#7B68EE"
+                                           WidthRequest="40"
+                                           HeightRequest="40"
+                                           HorizontalOptions="Center"
+                                           Margin="0,10,0,0" />
+                    </VerticalStackLayout>
+
+                    <!-- КОНТЕНТ - показывается после загрузки -->
                     <!-- Название маршрута -->
                     <Label Grid.Row="1"
                            Text="{Binding Name}"
                            FontSize="16"
                            FontAttributes="Bold"
-                           TextColor="White" />
+                           TextColor="White"
+                           IsVisible="{Binding IsRouteLoaded}" />
 
                     <!-- Расстояние + время -->
-                    <Grid Grid.Row="2" ColumnDefinitions="*,*" ColumnSpacing="30">
+                    <Grid Grid.Row="2" ColumnDefinitions="*,*" ColumnSpacing="30"
+                          IsVisible="{Binding IsRouteLoaded}">
                         <Frame BackgroundColor="#4D397E" CornerRadius="16" Padding="16">
                             <StackLayout>
                                 <Label Text="{Binding [Distance_Label], Source={x:Static helpers:LocalizationResourceManager.Instance}}" FontSize="12" TextColor="#EEEEEE" />
@@ -170,9 +262,20 @@
                         </Frame>
                     </Grid>
 
-                    <Grid Grid.Row="3" ColumnDefinitions="auto,*" ColumnSpacing="10">
+                    <Grid Grid.Row="3" ColumnDefinitions="auto,*" ColumnSpacing="10"
+                          IsVisible="{Binding IsRouteLoaded}">
                         <Button Grid.Column="0" Text="{Binding [ShowRouteLabel], Source={x:Static helpers:LocalizationResourceManager.Instance}}" FontSize="15" BackgroundColor="#7B68EE" Clicked="OnShowRouteClicked"/>
-                        <Button Grid.Column="1" Text="{Binding StartButtonText}" FontSize="15" BackgroundColor="#047A04" Clicked="OnStartRouteClicked"/>
+                        <Button x:Name="StartRouteButton" Grid.Column="1" 
+                                Text="{Binding [StartButtonText], Source={x:Static helpers:LocalizationResourceManager.Instance}}" 
+                                FontSize="15" 
+                                BackgroundColor="#047A04" 
+                                Clicked="OnStartRouteClicked">
+                            <Button.Triggers>
+                                <DataTrigger TargetType="Button" Binding="{Binding IsRouteStarted}" Value="True">
+                                    <Setter Property="Text" Value="{Binding [ContinueButtonText], Source={x:Static helpers:LocalizationResourceManager.Instance}}" />
+                                </DataTrigger>
+                            </Button.Triggers>
+                        </Button>
                     </Grid>
 
                 </Grid>

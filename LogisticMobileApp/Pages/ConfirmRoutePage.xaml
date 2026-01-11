@@ -5,6 +5,7 @@
              xmlns:dx="http://schemas.devexpress.com/maui"
              x:Class="LogisticMobileApp.Pages.ConfirmRoutePage"
              x:Name="Page"
+             Style="{StaticResource PageStyle}"
              Title="{Binding [ConfirmRoute_Title], Source={x:Static helpers:LocalizationResourceManager.Instance}}">
 
     <ContentPage.ToolbarItems>

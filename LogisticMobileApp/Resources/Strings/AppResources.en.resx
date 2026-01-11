@@ -327,4 +327,7 @@
   <data name="Map_TapToExpand" xml:space="preserve">
     <value>↑ Tap to show points</value>
   </data>
+  <data name="Map_FinishRoute" xml:space="preserve">
+    <value>Finish</value>
+  </data>
 </root>

@@ -403,6 +403,15 @@ namespace LogisticMobileApp.Resources.Strings {
         }
         
         /// <summary>
+        ///   Ищет локализованную строку, похожую на Завершить.
+        /// </summary>
+        public static string Map_FinishRoute {
+            get {
+                return ResourceManager.GetString("Map_FinishRoute", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Ищет локализованную строку, похожую на Моё место.
         /// </summary>
         public static string Map_MyLocation {

@@ -33,16 +33,17 @@ namespace LogisticMobileApp.Pages
         public bool IsConfirmed
         {
             get => _isConfirmed;
-            set { _isConfirmed = value; OnPropertyChanged(nameof(IsConfirmed)); OnPropertyChanged(nameof(StatusColor)); }
+            set { _isConfirmed = value; OnPropertyChanged(nameof(IsConfirmed)); OnPropertyChanged(nameof(StatusColor)); OnPropertyChanged(nameof(IsProcessed)); OnPropertyChanged(nameof(IsNotProcessed)); }
         }
         
         public bool IsRejected
         {
             get => _isRejected;
-            set { _isRejected = value; OnPropertyChanged(nameof(IsRejected)); OnPropertyChanged(nameof(StatusColor)); }
+            set { _isRejected = value; OnPropertyChanged(nameof(IsRejected)); OnPropertyChanged(nameof(StatusColor)); OnPropertyChanged(nameof(IsProcessed)); OnPropertyChanged(nameof(IsNotProcessed)); }
         }
         
         public bool IsProcessed => IsConfirmed || IsRejected;
+        public bool IsNotProcessed => !IsProcessed;
         
         public Microsoft.Maui.Graphics.Color StatusColor
         {
@@ -62,15 +63,18 @@ namespace LogisticMobileApp.Pages
     public partial class MapPage : ContentPage
     {
         private readonly List<ClientData> _clientsData;
+        private readonly List<ClientData> _originalClientsOrder; // Оригинальный порядок точек с сервера
         private readonly string? _geometryJson;
         private readonly RoutingService _routingService;
         private readonly ApiService _apiService;
         private readonly PickUpStatusService _pickUpStatusService;
         private readonly int _routeId;
         private readonly List<MPoint> _markerPoints = new();
+        private readonly List<MPoint> _originalMarkerPoints = new(); // Оригинальные маркеры
         private readonly List<MPoint> _routeLinePoints = new();
         private readonly List<MPoint> _routeFromMyLocation = new();
         private readonly ObservableCollection<RoutePointItem> _routePointItems = new();
+        private readonly Dictionary<int, int> _originalIndexMap = new(); // ClientId -> оригинальный индекс
         private MPoint? _myLocationPoint;
         private (double lat, double lon)? _myLocationCoords;
         private Mapsui.Map? _map;
@@ -91,11 +95,18 @@ namespace LogisticMobileApp.Pages
         {
             InitializeComponent();
             _clientsData = clientsData ?? new List<ClientData>();
+            _originalClientsOrder = new List<ClientData>(_clientsData); // Сохраняем оригинальный порядок
             _geometryJson = geometryJson;
             _routingService = new RoutingService();
             _apiService = apiService ?? App.Services.GetRequiredService<ApiService>();
             _pickUpStatusService = App.Services.GetRequiredService<PickUpStatusService>();
             _routeId = Preferences.Get("RouteId", 0);
+            
+            // Сохраняем оригинальные индексы
+            for (int i = 0; i < _clientsData.Count; i++)
+            {
+                _originalIndexMap[_clientsData[i].Id] = i + 1;
+            }
             
             // Привязываем коллекцию к CollectionView
             PointsCollectionView.ItemsSource = _routePointItems;
@@ -290,10 +301,10 @@ namespace LogisticMobileApp.Pages
                 // Заполняем список точек для bottom sheet
                 await PopulateRoutePointsListAsync();
 
-                // Парсим готовый маршрут из сервера (если есть)
+                // Парсим маршрут с сервера (основной маршрут между точками)
                 ParseGeometryJson();
 
-                // Строим маршрут от моего местоположения до первой точки
+                // Строим маршрут от моего местоположения до первой точки (через OSRM)
                 await BuildRouteFromMyLocationAsync();
 
                 // Добавляем слой с маршрутом (от моего местоположения до клиентов)
@@ -320,6 +331,9 @@ namespace LogisticMobileApp.Pages
                 MapControl.Map = _map;
                 SetInitialViewport();
                 _map.RefreshData();
+
+                // Проверяем состояние кнопки "Завершить маршрут"
+                await UpdateFinishButtonStateAsync();
             }
             catch (Exception ex)
             {
@@ -374,7 +388,19 @@ namespace LogisticMobileApp.Pages
         private void ParseClientCoordinates()
         {
             _markerPoints.Clear();
+            _originalMarkerPoints.Clear();
             
+            // Сначала парсим оригинальные маркеры (в порядке от сервера)
+            foreach (var client in _originalClientsOrder)
+            {
+                var point = ParseCoordinates(client.Coordinates);
+                if (point == null) continue;
+
+                var (x, y) = SphericalMercator.FromLonLat(point.Value.lon, point.Value.lat);
+                _originalMarkerPoints.Add(new MPoint(x, y));
+            }
+            
+            // Затем парсим текущие маркеры (могут быть переупорядочены)
             foreach (var client in _clientsData)
             {
                 var point = ParseCoordinates(client.Coordinates);
@@ -538,7 +564,14 @@ namespace LogisticMobileApp.Pages
             }
         }
 
-        private async Task BuildRouteFromMyLocationAsync()
+        /// <summary>
+        /// Строит маршрут от моего местоположения до указанной точки через OSRM
+        /// </summary>
+        /// <param name="toFirstUnprocessed">
+        /// true - маршрут до первой необработанной точки (для навигации)
+        /// false - маршрут до первой точки из оригинального списка (для обзора всего маршрута)
+        /// </param>
+        private async Task BuildRouteFromMyLocationAsync(bool toFirstUnprocessed = false)
         {
             _routeFromMyLocation.Clear();
 
@@ -548,30 +581,57 @@ namespace LogisticMobileApp.Pages
                 return;
             }
 
-            // Определяем первую точку маршрута
-            // ВСЕГДА берём координаты первого клиента из _clientsData (он может меняться!)
-            (double lat, double lon)? firstPoint = null;
+            (double lat, double lon)? targetPoint = null;
+            string targetName = "";
 
-            if (_clientsData.Count > 0)
+            if (toFirstUnprocessed)
             {
-                // Берём координаты первого клиента
-                firstPoint = ParseCoordinates(_clientsData[0].Coordinates);
-                System.Diagnostics.Debug.WriteLine($"[MapPage] Target client: {_clientsData[0].Name}, ID: {_clientsData[0].Id}");
+                // В режиме навигации: ищем первую необработанную точку
+                var processedIds = await _pickUpStatusService.GetProcessedClientIdsAsync(_routeId);
+                
+                foreach (var client in _clientsData)
+                {
+                    if (!processedIds.Contains(client.Id))
+                    {
+                        targetPoint = ParseCoordinates(client.Coordinates);
+                        targetName = client.Name;
+                        System.Diagnostics.Debug.WriteLine($"[MapPage] Navigation target (first unprocessed): {client.Name}, ID: {client.Id}");
+                        break;
+                    }
+                }
+                
+                // Если все точки обработаны, берём первую из оригинального списка
+                if (targetPoint == null && _originalClientsOrder.Count > 0)
+                {
+                    targetPoint = ParseCoordinates(_originalClientsOrder[0].Coordinates);
+                    targetName = _originalClientsOrder[0].Name;
+                    System.Diagnostics.Debug.WriteLine($"[MapPage] All processed, using first original: {targetName}");
+                }
+            }
+            else
+            {
+                // В обычном режиме: первая точка из оригинального списка
+                if (_originalClientsOrder.Count > 0)
+                {
+                    targetPoint = ParseCoordinates(_originalClientsOrder[0].Coordinates);
+                    targetName = _originalClientsOrder[0].Name;
+                    System.Diagnostics.Debug.WriteLine($"[MapPage] Normal mode target (first original): {targetName}");
+                }
             }
 
-            if (firstPoint == null)
+            if (targetPoint == null)
             {
-                System.Diagnostics.Debug.WriteLine("[MapPage] No first point for routing");
+                System.Diagnostics.Debug.WriteLine("[MapPage] No target point for routing");
                 return;
             }
 
-            System.Diagnostics.Debug.WriteLine($"[MapPage] Building route from ({_myLocationCoords.Value.lat}, {_myLocationCoords.Value.lon}) to ({firstPoint.Value.lat}, {firstPoint.Value.lon})");
+            System.Diagnostics.Debug.WriteLine($"[MapPage] Building route from ({_myLocationCoords.Value.lat}, {_myLocationCoords.Value.lon}) to ({targetPoint.Value.lat}, {targetPoint.Value.lon})");
 
-            // Запрашиваем маршрут от моего местоположения до первой точки
+            // Запрашиваем маршрут от моего местоположения до целевой точки
             var coordinates = new List<(double lat, double lon)>
             {
                 _myLocationCoords.Value,
-                firstPoint.Value
+                targetPoint.Value
             };
 
             var routePoints = await _routingService.GetRouteAsync(coordinates);
@@ -594,10 +654,8 @@ namespace LogisticMobileApp.Pages
                 {
                     _routeFromMyLocation.Add(_myLocationPoint);
                     // Также добавляем точку назначения для отображения линии
-                    if (_markerPoints.Count > 0)
-                    {
-                        _routeFromMyLocation.Add(_markerPoints[0]);
-                    }
+                    var (x, y) = SphericalMercator.FromLonLat(targetPoint.Value.lon, targetPoint.Value.lat);
+                    _routeFromMyLocation.Add(new MPoint(x, y));
                 }
             }
         }
@@ -875,6 +933,75 @@ namespace LogisticMobileApp.Pages
             CenterMapOnRoute();
         }
 
+        private async void OnFinishRouteClicked(object sender, EventArgs e)
+        {
+            // Подтверждение
+            var confirm = await DisplayAlert(
+                AppResources.Map_FinishRoute,
+                Preferences.Get("Language", "ru") switch
+                {
+                    "ru" => "Вы уверены, что хотите завершить маршрут?",
+                    "en" => "Are you sure you want to finish the route?",
+                    _ => "Czy na pewno chcesz zakończyć trasę?"
+                },
+                "OK",
+                AppResources.Language_Cancel);
+
+            if (!confirm) return;
+
+            try
+            {
+                LoadingIndicator.IsRunning = true;
+                LoadingIndicator.IsVisible = true;
+
+                var result = await _apiService.EndRouteAsync();
+                if (result)
+                {
+                    // Очищаем локальные статусы
+                    await _pickUpStatusService.ClearRouteAsync(_routeId);
+
+                    // Сбрасываем флаги маршрута
+                    Preferences.Set("RouteStarted", false);
+                    Preferences.Remove("RouteId");
+                    Preferences.Remove("RouteStartTime");
+                    Preferences.Set("NoActiveRoute", true);
+
+                    await CommunityToolkit.Maui.Alerts.Toast
+                        .Make(Preferences.Get("Language", "ru") switch
+                        {
+                            "ru" => "Маршрут завершён!",
+                            "en" => "Route finished!",
+                            _ => "Trasa zakończona!"
+                        }, CommunityToolkit.Maui.Core.ToastDuration.Short)
+                        .Show();
+
+                    // Возвращаемся на главный экран
+                    await Shell.Current.GoToAsync("//DashboardPage");
+                }
+            }
+            catch (Exception ex)
+            {
+                await DisplayAlert("Ошибка", ex.Message, "OK");
+            }
+            finally
+            {
+                LoadingIndicator.IsRunning = false;
+                LoadingIndicator.IsVisible = false;
+            }
+        }
+
+        /// <summary>
+        /// Проверяет, все ли точки обработаны, и обновляет состояние кнопки "Завершить маршрут"
+        /// </summary>
+        private async Task UpdateFinishButtonStateAsync()
+        {
+            var processedIds = await _pickUpStatusService.GetProcessedClientIdsAsync(_routeId);
+            var allProcessed = _clientsData.Count > 0 && processedIds.Count >= _clientsData.Count;
+
+            FinishRouteButton.IsEnabled = allProcessed;
+            FinishRouteButton.Opacity = allProcessed ? 1.0 : 0.5;
+        }
+
         private async void OnMyLocationClicked(object sender, EventArgs e)
         {
             try
@@ -969,8 +1096,8 @@ namespace LogisticMobileApp.Pages
                     var (x, y) = SphericalMercator.FromLonLat(location.Longitude, location.Latitude);
                     _myLocationPoint = new MPoint(x, y);
 
-                    // Перестраиваем маршрут от моего местоположения до первой точки
-                    await BuildRouteFromMyLocationAsync();
+                    // Перестраиваем маршрут от моего местоположения до первой необработанной точки
+                    await BuildRouteFromMyLocationAsync(toFirstUnprocessed: true);
 
                     // Сохраняем навигационные шаги
                     _navigationSteps = _routingService.LastNavigationSteps;
@@ -1024,6 +1151,9 @@ namespace LogisticMobileApp.Pages
             BottomSheet.HeightRequest = _bottomSheetMinHeight;
             _bottomSheetCurrentHeight = _bottomSheetMinHeight;
             
+            // Поднимаем плавающую кнопку выше
+            MyLocationFloatingButton.Margin = new Thickness(0, 0, 15, 210);
+            
             // Убираем первую точку из списка (она отображается в панели навигации)
             await UpdateRoutePointsListForNavigationAsync();
             
@@ -1052,6 +1182,9 @@ namespace LogisticMobileApp.Pages
             BottomSheet.HeightRequest = _bottomSheetMinHeight;
             _bottomSheetCurrentHeight = _bottomSheetMinHeight;
             
+            // Опускаем плавающую кнопку ниже
+            MyLocationFloatingButton.Margin = new Thickness(0, 0, 15, 145);
+            
             // Восстанавливаем полный список точек
             await PopulateRoutePointsListAsync();
             
@@ -1075,10 +1208,12 @@ namespace LogisticMobileApp.Pages
                 if (!statusDict.ContainsKey(client.Id))
                 {
                     MPoint? mapPoint = i < _markerPoints.Count ? _markerPoints[i] : null;
+                    // Используем оригинальный индекс точки
+                    var originalIndex = _originalIndexMap.TryGetValue(client.Id, out var idx) ? idx : i + 1;
                     _routePointItems.Add(new RoutePointItem
                     {
                         ClientId = client.Id,
-                        Index = _routePointItems.Count + 2, // +2 потому что первая точка на панели
+                        Index = originalIndex,
                         Name = client.Name,
                         Address = client.Address,
                         MapPoint = mapPoint,
@@ -1095,10 +1230,12 @@ namespace LogisticMobileApp.Pages
                 if (statusDict.TryGetValue(client.Id, out var status))
                 {
                     MPoint? mapPoint = i < _markerPoints.Count ? _markerPoints[i] : null;
+                    // Используем оригинальный индекс точки
+                    var originalIndex = _originalIndexMap.TryGetValue(client.Id, out var idx) ? idx : i + 1;
                     _routePointItems.Add(new RoutePointItem
                     {
                         ClientId = client.Id,
-                        Index = _routePointItems.Count + 2,
+                        Index = originalIndex,
                         Name = client.Name,
                         Address = client.Address,
                         MapPoint = mapPoint,
@@ -1109,10 +1246,29 @@ namespace LogisticMobileApp.Pages
             }
         }
 
-        private void UpdateDestinationInfo()
+        private async void UpdateDestinationInfo()
         {
-            if (_clientsData.Count > 0)
+            // В режиме навигации показываем первую НЕОБРАБОТАННУЮ точку
+            var processedIds = await _pickUpStatusService.GetProcessedClientIdsAsync(_routeId);
+            
+            ClientData? targetClient = null;
+            foreach (var client in _clientsData)
             {
+                if (!processedIds.Contains(client.Id))
+                {
+                    targetClient = client;
+                    break;
+                }
+            }
+
+            if (targetClient != null)
+            {
+                DestinationNameLabel.Text = targetClient.Name ?? "";
+                DestinationAddressLabel.Text = targetClient.Address ?? "";
+            }
+            else if (_clientsData.Count > 0)
+            {
+                // Все обработаны - показываем первую
                 var firstClient = _clientsData[0];
                 DestinationNameLabel.Text = firstClient.Name ?? "";
                 DestinationAddressLabel.Text = firstClient.Address ?? "";
@@ -1183,6 +1339,105 @@ namespace LogisticMobileApp.Pages
         {
             DisableNavigationMode();
             CenterMapOnRoute();
+        }
+
+        /// <summary>
+        /// Обработчик подтверждения точки из списка
+        /// </summary>
+        private async void OnListItemConfirmClicked(object sender, EventArgs e)
+        {
+            if (sender is ImageButton button && button.CommandParameter is RoutePointItem item)
+            {
+                // Находим соответствующего клиента
+                var client = _clientsData.FirstOrDefault(c => c.Id == item.ClientId);
+                if (client == null) return;
+
+                // Показываем уведомление
+                await CommunityToolkit.Maui.Alerts.Toast
+                    .Make($"✓ {item.Name}", CommunityToolkit.Maui.Core.ToastDuration.Short)
+                    .Show();
+
+                // Сохраняем статус локально
+                await _pickUpStatusService.ConfirmAsync(client.Id, _routeId);
+
+                // Обновляем UI элемента
+                item.IsConfirmed = true;
+                item.IsRejected = false;
+
+                // Если в режиме навигации, обновляем список
+                if (_isNavigationMode)
+                {
+                    await UpdateRoutePointsListForNavigationAsync();
+                }
+                else
+                {
+                    await PopulateRoutePointsListAsync();
+                }
+
+                // Проверяем состояние кнопки "Завершить маршрут"
+                await UpdateFinishButtonStateAsync();
+            }
+        }
+
+        /// <summary>
+        /// Обработчик отказа от точки из списка
+        /// </summary>
+        private async void OnListItemDeniedClicked(object sender, EventArgs e)
+        {
+            if (sender is ImageButton button && button.CommandParameter is RoutePointItem item)
+            {
+                // Находим соответствующего клиента
+                var client = _clientsData.FirstOrDefault(c => c.Id == item.ClientId);
+                if (client == null) return;
+
+                // Показываем диалог для ввода причины отказа
+                var comment = await DisplayPromptAsync(
+                    AppResources.ConfirmRoute_RejectButton,
+                    $"{item.Name}\n{item.Address}",
+                    AppResources.ConfirmRoute_SendComment,
+                    AppResources.Language_Cancel,
+                    AppResources.ConfirmRoute_CommentPlaceholder,
+                    maxLength: 500,
+                    keyboard: Keyboard.Text);
+
+                if (string.IsNullOrWhiteSpace(comment))
+                    return;
+
+                try
+                {
+                    // Отправляем на сервер
+                    await _apiService.AddNoteAsync(client.Id, comment);
+
+                    // Показываем уведомление
+                    await CommunityToolkit.Maui.Alerts.Toast
+                        .Make($"✗ {item.Name}", CommunityToolkit.Maui.Core.ToastDuration.Short)
+                        .Show();
+
+                    // Сохраняем статус локально
+                    await _pickUpStatusService.RejectAsync(client.Id, _routeId, comment);
+
+                    // Обновляем UI элемента
+                    item.IsConfirmed = false;
+                    item.IsRejected = true;
+
+                    // Если в режиме навигации, обновляем список
+                    if (_isNavigationMode)
+                    {
+                        await UpdateRoutePointsListForNavigationAsync();
+                    }
+                    else
+                    {
+                        await PopulateRoutePointsListAsync();
+                    }
+
+                    // Проверяем состояние кнопки "Завершить маршрут"
+                    await UpdateFinishButtonStateAsync();
+                }
+                catch (Exception ex)
+                {
+                    await DisplayAlert("Ошибка", ex.Message, "OK");
+                }
+            }
         }
 
         private void UpdateNavigationInfo()
@@ -1557,10 +1812,12 @@ namespace LogisticMobileApp.Pages
                 if (!statusDict.ContainsKey(client.Id))
                 {
                     MPoint? mapPoint = i < _markerPoints.Count ? _markerPoints[i] : null;
+                    // Используем оригинальный индекс точки
+                    var originalIndex = _originalIndexMap.TryGetValue(client.Id, out var idx) ? idx : i + 1;
                     _routePointItems.Add(new RoutePointItem
                     {
                         ClientId = client.Id,
-                        Index = _routePointItems.Count + 1,
+                        Index = originalIndex,
                         Name = client.Name,
                         Address = client.Address,
                         MapPoint = mapPoint,
@@ -1577,10 +1834,12 @@ namespace LogisticMobileApp.Pages
                 if (statusDict.TryGetValue(client.Id, out var status))
                 {
                     MPoint? mapPoint = i < _markerPoints.Count ? _markerPoints[i] : null;
+                    // Используем оригинальный индекс точки
+                    var originalIndex = _originalIndexMap.TryGetValue(client.Id, out var idx) ? idx : i + 1;
                     _routePointItems.Add(new RoutePointItem
                     {
                         ClientId = client.Id,
-                        Index = _routePointItems.Count + 1,
+                        Index = originalIndex,
                         Name = client.Name,
                         Address = client.Address,
                         MapPoint = mapPoint,

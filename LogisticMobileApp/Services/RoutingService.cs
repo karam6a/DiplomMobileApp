@@ -337,16 +337,16 @@ namespace LogisticMobileApp.Services
                 if (firstRoute.TryGetProperty("geometry", out var geometry) &&
                     geometry.TryGetProperty("coordinates", out var coordsArray))
                 {
-                    var coordCount = coordsArray.GetArrayLength();
-                    System.Diagnostics.Debug.WriteLine($"[RoutingService] Found {coordCount} coordinates in response");
+                var coordCount = coordsArray.GetArrayLength();
+                System.Diagnostics.Debug.WriteLine($"[RoutingService] Found {coordCount} coordinates in response");
 
-                    // Парсим координаты (OSRM возвращает [lon, lat])
-                    foreach (var coord in coordsArray.EnumerateArray())
+                // Парсим координаты (OSRM возвращает [lon, lat])
+                foreach (var coord in coordsArray.EnumerateArray())
+                {
+                    if (coord.GetArrayLength() >= 2)
                     {
-                        if (coord.GetArrayLength() >= 2)
-                        {
-                            var lon = coord[0].GetDouble();
-                            var lat = coord[1].GetDouble();
+                        var lon = coord[0].GetDouble();
+                        var lat = coord[1].GetDouble();
                             result.RoutePoints.Add((lat, lon));
                         }
                     }

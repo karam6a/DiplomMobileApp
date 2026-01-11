@@ -253,9 +253,9 @@ namespace LogisticMobileApp.Pages
             }
         }
 
-        private void OnPointSelected(object? sender, SelectionChangedEventArgs e)
+        private void OnPointItemTapped(object? sender, TappedEventArgs e)
         {
-            if (e.CurrentSelection.FirstOrDefault() is RoutePointItem selectedPoint && selectedPoint.MapPoint != null)
+            if (e.Parameter is RoutePointItem selectedPoint && selectedPoint.MapPoint != null)
             {
                 // Центрируем карту на выбранной точке
                 MapControl.Map.Navigator.CenterOn(selectedPoint.MapPoint);
@@ -1710,6 +1710,11 @@ namespace LogisticMobileApp.Pages
                 return null;
 
             var firstPoint = _markerPoints[0];
+            var firstClient = _clientsData[0];
+            
+            // Получаем оригинальный индекс для отображения
+            var originalIndex = _originalIndexMap.TryGetValue(firstClient.Id, out var idx) ? idx : 1;
+            
             var feature = new PointFeature(firstPoint)
             {
                 Styles = new List<IStyle>
@@ -1722,10 +1727,10 @@ namespace LogisticMobileApp.Pages
                         Outline = new Pen(Color.White, 3),
                         SymbolType = SymbolType.Ellipse
                     },
-                    // Номер внутри круга
+                    // Номер внутри круга (оригинальный индекс)
                     new LabelStyle
                     {
-                        Text = "1",
+                        Text = originalIndex.ToString(),
                         ForeColor = Color.White,
                         BackColor = new Brush(Color.Transparent),
                         Font = new Font { Size = 16, Bold = true },
@@ -1927,8 +1932,8 @@ namespace LogisticMobileApp.Pages
                     System.Diagnostics.Debug.WriteLine($"[MapPage] Next target client: {_clientsData[0].Name}, ID: {_clientsData[0].Id}");
                     System.Diagnostics.Debug.WriteLine($"[MapPage] MarkerPoints count: {_markerPoints.Count}");
                     
-                    // Перестраиваем маршрут до следующей точки
-                    await BuildRouteFromMyLocationAsync();
+                    // Перестраиваем маршрут до следующей НЕОБРАБОТАННОЙ точки
+                    await BuildRouteFromMyLocationAsync(toFirstUnprocessed: true);
                     
                     System.Diagnostics.Debug.WriteLine($"[MapPage] Route rebuilt, points: {_routeFromMyLocation.Count}");
                     
@@ -1967,6 +1972,9 @@ namespace LogisticMobileApp.Pages
                 
                 DisableNavigationMode();
             }
+            
+            // Обновляем состояние кнопки "Завершить маршрут"
+            await UpdateFinishButtonStateAsync();
         }
 
         private async Task FetchNavigationSteps()
@@ -1997,5 +2005,6 @@ namespace LogisticMobileApp.Pages
             await _routingService.GetRouteAsync(points);
             _navigationSteps = _routingService.LastNavigationSteps;
         }
+
     }
 }

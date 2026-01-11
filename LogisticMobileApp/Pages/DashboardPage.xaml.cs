@@ -100,6 +100,36 @@ namespace LogisticMobileApp.Pages
             }
         }
 
+        // Выбор языка через ActionSheet
+        private async void OnLanguageButtonClicked(object sender, EventArgs e)
+        {
+            var title = LocalizationResourceManager.Instance["Language_PromptTitle"];
+            var cancel = LocalizationResourceManager.Instance["Language_Cancel"];
+
+            var choice = await DisplayActionSheet(
+                title,
+                cancel,
+                null,
+                "ru", "en", "pl");
+
+            if (string.IsNullOrEmpty(choice) || choice == cancel)
+                return;
+
+            try
+            {
+                var culture = new CultureInfo(choice);
+                LocalizationResourceManager.Instance.SetCulture(culture);
+                Preferences.Set("Language", choice);
+            }
+            catch (Exception ex)
+            {
+                await DisplayAlert(
+                    LocalizationResourceManager.Instance["Settings_Title"],
+                    ex.Message,
+                    "OK");
+            }
+        }
+
         private async void OnLogoutClicked(object sender, EventArgs e)
         {
             bool answer = await DisplayAlert(

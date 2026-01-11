@@ -13,9 +13,13 @@
     </ContentPage.Resources>
 
     <ContentPage.ToolbarItems>
-        <ToolbarItem IconImageSource="logout_icon.png"
+        <ToolbarItem IconImageSource="language_icon_dark.svg"
                      Order="Primary"
                      Priority="0"
+                     Clicked="OnLanguageButtonClicked" />
+        <ToolbarItem IconImageSource="logout_icon.png"
+                     Order="Primary"
+                     Priority="1"
                      Clicked="OnLogoutClicked" />
     </ContentPage.ToolbarItems>
 

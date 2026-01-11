@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:mapsui="clr-namespace:Mapsui.UI.Maui;assembly=Mapsui.UI.Maui"
              xmlns:helpers="clr-namespace:LogisticMobileApp.Helpers"
+			 xmlns:dx="http://schemas.devexpress.com/maui"
              x:Class="LogisticMobileApp.Pages.MapPage"
              Title="{Binding [Map_Title], Source={x:Static helpers:LocalizationResourceManager.Instance}}">
 
@@ -316,12 +317,12 @@
                 </Grid>
 
                 <!-- Список точек маршрута -->
-                <CollectionView x:Name="PointsCollectionView"
+                <dx:DXCollectionView x:Name="PointsCollectionView"
                                 Grid.Row="2"
                                 Margin="10,0,10,10"
                                 SelectionMode="Single"
                                 SelectionChanged="OnPointSelected">
-                    <CollectionView.ItemTemplate>
+                    <dx:DXCollectionView.ItemTemplate>
                         <DataTemplate>
                             <Border Margin="0,4" 
                                     Padding="12,8" 
@@ -432,8 +433,8 @@
                                 </Grid>
                             </Border>
                         </DataTemplate>
-                    </CollectionView.ItemTemplate>
-                </CollectionView>
+                    </dx:DXCollectionView.ItemTemplate>
+                </dx:DXCollectionView>
             </Grid>
         </Border>
     </Grid>

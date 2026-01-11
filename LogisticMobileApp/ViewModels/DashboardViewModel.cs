@@ -100,7 +100,7 @@ public partial class DashboardViewModel : ObservableObject
                         Status = route.Status;
 
                         Distance = (route.Distance / 1000).ToString("F1");
-                        Duration = route.Duration.ToString();
+                        Duration = (route.Duration / 60).ToString("F0");
 
 
                         MyRouteInfo = route;

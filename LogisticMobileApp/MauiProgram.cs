@@ -6,6 +6,7 @@ using ZXing.Net.Maui.Controls;
 using LogisticMobileApp.Services;
 using CommunityToolkit.Maui;
 using SkiaSharp.Views.Maui.Controls.Hosting;
+using DevExpress.Maui;
 
 
 #if ANDROID
@@ -21,9 +22,11 @@ public static class MauiProgram
 	public static MauiApp CreateMauiApp()
 	{
 		var builder = MauiApp.CreateBuilder();
-		builder
-			.UseMauiApp<App>()
-			.UseBarcodeReader()
+        builder
+            .UseMauiApp<App>()
+            .UseDevExpress()
+            .UseDevExpressCollectionView()
+            .UseBarcodeReader()
             .UseMauiCommunityToolkit()
             .UseSkiaSharp()
             .ConfigureFonts(fonts =>

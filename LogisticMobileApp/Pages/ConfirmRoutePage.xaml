@@ -2,6 +2,7 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:helpers="clr-namespace:LogisticMobileApp.Helpers"
+             xmlns:dx="http://schemas.devexpress.com/maui"
              x:Class="LogisticMobileApp.Pages.ConfirmRoutePage"
              x:Name="Page"
              Title="{Binding [ConfirmRoute_Title], Source={x:Static helpers:LocalizationResourceManager.Instance}}">
@@ -42,8 +43,8 @@
     <ScrollView>
     <VerticalStackLayout Padding="10" Spacing="10">
 
-        <CollectionView ItemsSource="{Binding Stops}" Margin="0,0,0,10">
-            <CollectionView.ItemTemplate>
+        <dx:DXCollectionView ItemsSource="{Binding Stops}" Margin="0,0,0,10">
+            <dx:DXCollectionView.ItemTemplate>
                 <DataTemplate>
                     <Frame Margin="0,8"
                            Padding="12"
@@ -116,8 +117,8 @@
                         </VerticalStackLayout>
                     </Frame>
                 </DataTemplate>
-            </CollectionView.ItemTemplate>
-        </CollectionView>
+            </dx:DXCollectionView.ItemTemplate>
+        </dx:DXCollectionView>
 
         <Button Text="{Binding [ConfirmRoute_FinishRouteButton], Source={x:Static helpers:LocalizationResourceManager.Instance}}"
                 BackgroundColor="#1976D2"

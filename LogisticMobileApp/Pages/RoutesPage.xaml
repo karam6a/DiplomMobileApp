@@ -2,6 +2,7 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:helpers="clr-namespace:LogisticMobileApp.Helpers"
+             xmlns:dx="http://schemas.devexpress.com/maui"
              x:Class="LogisticMobileApp.Pages.RoutesPage"
              Title="{Binding RouteName}">
 
@@ -16,11 +17,11 @@
                Margin="0,15,0,10" />
 
         <!-- Список клиентов -->
-        <CollectionView Grid.Row="1"
+        <dx:DXCollectionView Grid.Row="1"
                         ItemsSource="{Binding Clients}"
                         Margin="10"
                         VerticalOptions="Fill">
-            <CollectionView.ItemTemplate>
+            <dx:DXCollectionView.ItemTemplate>
                 <DataTemplate>
                     <Frame CornerRadius="12"
                            Margin="0,6"
@@ -68,8 +69,8 @@
                         </Grid>
                     </Frame>
                 </DataTemplate>
-            </CollectionView.ItemTemplate>
-        </CollectionView>
+            </dx:DXCollectionView.ItemTemplate>
+        </dx:DXCollectionView>
 
     </Grid>
 </ContentPage>

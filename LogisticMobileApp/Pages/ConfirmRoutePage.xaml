@@ -63,8 +63,8 @@
                            Padding="12"
                            CornerRadius="12"
                            HasShadow="True"
-                           BackgroundColor="{AppThemeBinding Light=#FAFAFA, Dark=#1E1E1E}"
-                           BorderColor="{AppThemeBinding Light=#DEDEDE, Dark=#333333}">
+                           BackgroundColor="{AppThemeBinding Light={StaticResource RouteCardBackgroundLight}, Dark={StaticResource RouteCardBackgroundDark}}"
+                           BorderColor="{AppThemeBinding Light={StaticResource RouteCardBorderLight}, Dark={StaticResource RouteCardBorderDark}}">
                         <Frame.Triggers>
                             <DataTrigger TargetType="Frame"
                                          Binding="{Binding IsConfirmed}" Value="True">
@@ -80,7 +80,7 @@
 
                         <VerticalStackLayout Spacing="8">
                             <HorizontalStackLayout Spacing="8">
-                                <Border BackgroundColor="{AppThemeBinding Light=#388E3C, Dark=#4CAF50}"
+                                <Border BackgroundColor="{AppThemeBinding Light={StaticResource PurpleAccent}, Dark={StaticResource PurpleAccentDark}}"
                                         WidthRequest="28"
                                         HeightRequest="28"
                                         StrokeShape="RoundRectangle 14"

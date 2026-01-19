@@ -1,4 +1,4 @@
-﻿namespace LogisticMobileApp
+namespace LogisticMobileApp
 {
     public partial class App : Application
     {
@@ -8,6 +8,10 @@
             InitializeComponent();
 
             Services = serviceProvider;
+
+            // Загружаем сохранённую тему
+            var savedTheme = Preferences.Get("AppTheme", "Dark");
+            UserAppTheme = savedTheme == "Light" ? AppTheme.Light : AppTheme.Dark;
         }
 
         protected override Window CreateWindow(IActivationState? activationState)

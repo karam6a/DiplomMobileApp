@@ -17,9 +17,13 @@
                      Order="Primary"
                      Priority="0"
                      Clicked="OnLanguageButtonClicked" />
-        <ToolbarItem IconImageSource="logout_icon.png"
+        <ToolbarItem IconImageSource="theme_icon_dark.svg"
                      Order="Primary"
                      Priority="1"
+                     Clicked="OnThemeButtonClicked" />
+        <ToolbarItem IconImageSource="logout_icon.png"
+                     Order="Primary"
+                     Priority="2"
                      Clicked="OnLogoutClicked" />
     </ContentPage.ToolbarItems>
 
@@ -27,7 +31,8 @@
         <StackLayout Padding="20" Spacing="15">
             <!-- КАРТОЧКА ВОДИТЕЛЯ — БЕЗОПАСНАЯ В RELEASE -->
             
-            <Frame BackgroundColor="#1E1E2E" 
+            <Frame BackgroundColor="{AppThemeBinding Light={StaticResource CardBackgroundLight}, Dark={StaticResource CardBackgroundDark}}" 
+                   BorderColor="{AppThemeBinding Light={StaticResource CardBorderLight}, Dark={StaticResource CardBorderDark}}"
                    CornerRadius="16" 
                    Padding="20" 
                    HasShadow="True">
@@ -37,18 +42,18 @@
                     <Label Text="{Binding [Driver_Label], Source={x:Static helpers:LocalizationResourceManager.Instance}}" 
                            FontSize="24" 
                            FontAttributes="Bold" 
-                           TextColor="#AAAAAA" />
+                           TextColor="{AppThemeBinding Light={StaticResource MutedTextLight}, Dark={StaticResource MutedTextDark}}" />
 
                     <Label Grid.Row="1" 
                            Text="{Binding DriverName}" 
                            FontSize="22" 
                            FontAttributes="Bold" 
-                           TextColor="White" />
+                           TextColor="{AppThemeBinding Light={StaticResource TextLight}, Dark={StaticResource TextDark}}" />
 
                     <Label Grid.Row="1" 
                            Text="{Binding DriverPhone}" 
                            FontSize="16" 
-                           TextColor="#BBBBBB" 
+                           TextColor="{AppThemeBinding Light={StaticResource MutedTextLight}, Dark={StaticResource MutedTextDark}}" 
                            Margin="0,30,0,0" />
 
                     <!-- Статус водителя и номер машины -->
@@ -110,7 +115,8 @@
             </Frame>
 
             <!-- КАРТОЧКА МАРШРУТА — сразу под карточкой водителя -->
-            <Frame BackgroundColor="#1E1E2E" 
+            <Frame BackgroundColor="{AppThemeBinding Light={StaticResource CardBackgroundLight}, Dark={StaticResource CardBackgroundDark}}" 
+                   BorderColor="{AppThemeBinding Light={StaticResource CardBorderLight}, Dark={StaticResource CardBorderDark}}"
                    CornerRadius="20" 
                    Padding="20" 
                    Margin="0,20,0,0"
@@ -122,7 +128,7 @@
                     <Label Text="{Binding [Active_Route_Label], Source={x:Static helpers:LocalizationResourceManager.Instance}}" 
                            FontSize="24" 
                            FontAttributes="Bold" 
-                           TextColor="#AAAAAA" />
+                           TextColor="{AppThemeBinding Light={StaticResource MutedTextLight}, Dark={StaticResource MutedTextDark}}" />
 
                     <!-- SKELETON LOADER - показывается во время загрузки -->
                     <VerticalStackLayout Grid.Row="1" Grid.RowSpan="3" 
@@ -130,7 +136,7 @@
                                          IsVisible="{Binding IsRouteLoading}">
                         
                         <!-- Скелетон названия маршрута -->
-                        <Border BackgroundColor="#3A3A4A" 
+                        <Border BackgroundColor="{AppThemeBinding Light={StaticResource SkeletonLight}, Dark={StaticResource SkeletonDark}}" 
                                 HeightRequest="20" 
                                 WidthRequest="150"
                                 HorizontalOptions="Start"
@@ -147,7 +153,7 @@
 
                         <!-- Скелетон карточек расстояния и времени -->
                         <Grid ColumnDefinitions="*,*" ColumnSpacing="30">
-                            <Border BackgroundColor="#3A3A4A" 
+                            <Border BackgroundColor="{AppThemeBinding Light={StaticResource SkeletonLight}, Dark={StaticResource SkeletonDark}}" 
                                     HeightRequest="80" 
                                     StrokeShape="RoundRectangle 16"
                                     StrokeThickness="0">
@@ -160,7 +166,7 @@
                                 </Border.Behaviors>
                             </Border>
                             <Border Grid.Column="1" 
-                                    BackgroundColor="#3A3A4A" 
+                                    BackgroundColor="{AppThemeBinding Light={StaticResource SkeletonLight}, Dark={StaticResource SkeletonDark}}" 
                                     HeightRequest="80" 
                                     StrokeShape="RoundRectangle 16"
                                     StrokeThickness="0">
@@ -176,7 +182,7 @@
 
                         <!-- Скелетон кнопок -->
                         <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
-                            <Border BackgroundColor="#3A3A4A" 
+                            <Border BackgroundColor="{AppThemeBinding Light={StaticResource SkeletonLight}, Dark={StaticResource SkeletonDark}}" 
                                     HeightRequest="44" 
                                     WidthRequest="120"
                                     StrokeShape="RoundRectangle 8"
@@ -190,7 +196,7 @@
                                 </Border.Behaviors>
                             </Border>
                             <Border Grid.Column="1" 
-                                    BackgroundColor="#3A3A4A" 
+                                    BackgroundColor="{AppThemeBinding Light={StaticResource SkeletonLight}, Dark={StaticResource SkeletonDark}}" 
                                     HeightRequest="44" 
                                     StrokeShape="RoundRectangle 8"
                                     StrokeThickness="0">
@@ -229,7 +235,7 @@
                         <!-- Сообщение -->
                         <Label Text="{Binding [Dashboard_NoRouteMessage], Source={x:Static helpers:LocalizationResourceManager.Instance}}"
                                FontSize="16"
-                               TextColor="#AAAAAA"
+                               TextColor="{AppThemeBinding Light={StaticResource MutedTextLight}, Dark={StaticResource MutedTextDark}}"
                                HorizontalOptions="Center"
                                HorizontalTextAlignment="Center"
                                LineBreakMode="WordWrap" />
@@ -242,13 +248,13 @@
                            Text="{Binding Name}"
                            FontSize="16"
                            FontAttributes="Bold"
-                           TextColor="White"
+                           TextColor="{AppThemeBinding Light={StaticResource TextLight}, Dark={StaticResource TextDark}}"
                            IsVisible="{Binding IsRouteLoaded}" />
 
                     <!-- Расстояние + время -->
                     <Grid Grid.Row="2" ColumnDefinitions="*,*" ColumnSpacing="30"
                           IsVisible="{Binding IsRouteLoaded}">
-                        <Frame BackgroundColor="#4D397E" CornerRadius="16" Padding="16">
+                        <Frame BackgroundColor="{AppThemeBinding Light={StaticResource PurpleAccent}, Dark={StaticResource PurpleAccentDark}}" CornerRadius="16" Padding="16">
                             <StackLayout>
                                 <Label Text="{Binding [Distance_Label], Source={x:Static helpers:LocalizationResourceManager.Instance}}" FontSize="12" TextColor="#EEEEEE" />
                                 <Label FontSize="22" 
@@ -265,7 +271,7 @@
                             </StackLayout>
                         </Frame>
 
-                        <Frame Grid.Column="1" BackgroundColor="#4D397E" CornerRadius="16" Padding="16">
+                        <Frame Grid.Column="1" BackgroundColor="{AppThemeBinding Light={StaticResource PurpleAccent}, Dark={StaticResource PurpleAccentDark}}" CornerRadius="16" Padding="16">
                             <StackLayout>
                                 <Label Text="{Binding [TravelTimeLabel], Source={x:Static helpers:LocalizationResourceManager.Instance}}" FontSize="12" TextColor="#EEEEEE" />
                                 <Label

@@ -133,6 +133,21 @@ namespace LogisticMobileApp.Pages
             }
         }
 
+        private void OnThemeButtonClicked(object sender, EventArgs e)
+        {
+            // Переключаем тему
+            if (Application.Current.UserAppTheme == AppTheme.Dark)
+            {
+                Application.Current.UserAppTheme = AppTheme.Light;
+                Preferences.Set("AppTheme", "Light");
+            }
+            else
+            {
+                Application.Current.UserAppTheme = AppTheme.Dark;
+                Preferences.Set("AppTheme", "Dark");
+            }
+        }
+
         private async void OnLogoutClicked(object sender, EventArgs e)
         {
             bool answer = await DisplayAlert(

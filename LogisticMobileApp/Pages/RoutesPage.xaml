@@ -19,8 +19,8 @@
                            Margin="0,6"
                            Padding="16"
                            HasShadow="True"
-                           BackgroundColor="{AppThemeBinding Light=#FFFFFF, Dark=#1E1E1E}"
-                           BorderColor="{AppThemeBinding Light=#E0E0E0, Dark=#333333}">
+                           BackgroundColor="{AppThemeBinding Light={StaticResource RouteCardBackgroundLight}, Dark={StaticResource RouteCardBackgroundDark}}"
+                           BorderColor="{AppThemeBinding Light={StaticResource RouteCardBorderLight}, Dark={StaticResource RouteCardBorderDark}}">
 
                         <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
                             <VerticalStackLayout Spacing="6">

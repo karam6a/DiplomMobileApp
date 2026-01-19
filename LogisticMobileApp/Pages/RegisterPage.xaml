@@ -26,11 +26,8 @@
                         WidthRequest="40"
                         HeightRequest="40"
                         BackgroundColor="Transparent"
-                        Command="{Binding OpenScannerCommand}">
-                    <Button.ImageSource>
-                        <FileImageSource File="camera.svg"/>
-                    </Button.ImageSource>
-                </Button>
+                        Command="{Binding OpenScannerCommand}"
+                        ImageSource="{AppThemeBinding Light=camera_light.svg, Dark=camera.svg}" />
             </Grid>
 
             <Button Text="{Binding [Register_Button], Source={x:Static helpers:LocalizationResourceManager.Instance}}"

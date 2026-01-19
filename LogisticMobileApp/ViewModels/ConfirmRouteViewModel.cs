@@ -64,16 +64,23 @@ namespace LogisticMobileApp.ViewModels
                 var statusDict = statuses.ToDictionary(s => s.ClientId);
                 
                 // Создаём список RouteStop с применением статусов
-                var allStops = _clientsData.Select((c, index) => new RouteStop
+                var allStops = _clientsData.Select((c, index) => 
                 {
-                    Id = c.Id,
-                    Name = c.Name,
-                    Address = c.Address,
-                    ContainerCount = c.ContainerCount,
-                    OriginalIndex = index + 1,
-                    IsConfirmed = statusDict.TryGetValue(c.Id, out var status) && status.IsConfirmed,
-                    IsRejected = statusDict.TryGetValue(c.Id, out status) && status.IsRejected,
-                    Comment = statusDict.TryGetValue(c.Id, out status) ? status.Comment : null
+                    var hasStatus = statusDict.TryGetValue(c.Id, out var status);
+                    var isRejected = hasStatus && status.IsRejected;
+                    
+                    return new RouteStop
+                    {
+                        Id = c.Id,
+                        Name = c.Name,
+                        Address = c.Address,
+                        ContainerCount = c.ContainerCount,
+                        OriginalIndex = index + 1,
+                        IsConfirmed = hasStatus && status.IsConfirmed,
+                        IsRejected = isRejected,
+                        IsCommentSent = isRejected, // Если точка отклонена в storage, значит комментарий был отправлен
+                        Comment = hasStatus ? status.Comment : null
+                    };
                 }).ToList();
                 
                 // Сортируем: сначала необработанные, потом обработанные

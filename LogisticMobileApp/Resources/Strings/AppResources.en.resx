@@ -339,4 +339,7 @@
   <data name="ConfirmRoute_StatusRejected" xml:space="preserve">
     <value>Rejected</value>
   </data>
+  <data name="ConfirmRoute_CancelButton" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
 </root>

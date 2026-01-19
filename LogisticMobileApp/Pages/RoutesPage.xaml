@@ -8,15 +8,6 @@
              Title="{Binding RouteName}">
 
     <Grid RowDefinitions="Auto,*">
-
-        <!-- Заголовок -->
-        <Label Grid.Row="0"
-               Text="Точки маршрута"
-               FontSize="22"
-               FontAttributes="Bold"
-               HorizontalOptions="Center"
-               Margin="0,15,0,10" />
-
         <!-- Список клиентов -->
         <dx:DXCollectionView Grid.Row="1"
                         ItemsSource="{Binding Clients}"

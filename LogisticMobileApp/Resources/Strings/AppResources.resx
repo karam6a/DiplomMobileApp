@@ -360,4 +360,7 @@
   <data name="ConfirmRoute_StatusRejected" xml:space="preserve">
     <value>Отклонено</value>
   </data>
+  <data name="ConfirmRoute_CancelButton" xml:space="preserve">
+    <value>Отмена</value>
+  </data>
 </root>

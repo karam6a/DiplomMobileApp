@@ -18,8 +18,8 @@ public partial class RegisterViewModel : ObservableObject
 
     public RegisterViewModel(IServiceProvider services, ApiService api)
     {
-        _services = services;
-        _api = api;
+        _services = services; // Aby utworzyć ScannerPage poprzez DI
+        _api = api; // Do żądań sieciowych
 
         OpenScannerCommand = new AsyncRelayCommand(OpenScannerAsync);
         RegisterCommand = new AsyncRelayCommand(RegisterAsync);

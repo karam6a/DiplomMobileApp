@@ -142,8 +142,8 @@
                                        VerticalOptions="Center" />
                             </HorizontalStackLayout>
                             
-                            <!-- Статус обработки для отклонённых точек -->
-                            <HorizontalStackLayout Spacing="8" IsVisible="{Binding IsRejected}">
+                            <!-- Статус обработки для отклонённых точек (показывается только после отправки комментария) -->
+                            <HorizontalStackLayout Spacing="8" IsVisible="{Binding IsCommentSent}">
                                 <Image Source="denied_pick_up_icon.svg" WidthRequest="20" HeightRequest="20" />
                                 <Label Text="{Binding [ConfirmRoute_StatusRejected], Source={x:Static helpers:LocalizationResourceManager.Instance}}"
                                        FontSize="14"
@@ -151,24 +151,32 @@
                                        VerticalOptions="Center" />
                             </HorizontalStackLayout>
 
-                            <VerticalStackLayout IsVisible="{Binding IsRejected}" Spacing="6">
+                            <!-- Поле ввода комментария (показывается пока комментарий не отправлен) -->
+                            <VerticalStackLayout IsVisible="{Binding IsPendingRejection}" Spacing="6">
 
                                 <Frame Padding="0"
-           HasShadow="False"
-           CornerRadius="12"
-           BorderColor="{AppThemeBinding Light=#CCCCCC, Dark=#555555}"
-           BackgroundColor="{AppThemeBinding Light=#FFFFFF, Dark=#2B2B2B}">
+                                       HasShadow="False"
+                                       CornerRadius="12"
+                                       BorderColor="{AppThemeBinding Light=#CCCCCC, Dark=#555555}"
+                                       BackgroundColor="{AppThemeBinding Light=#FFFFFF, Dark=#2B2B2B}">
                                     <Entry Placeholder="{Binding [ConfirmRoute_CommentPlaceholder], Source={x:Static helpers:LocalizationResourceManager.Instance}}"
-               Text="{Binding Comment}"
-               BackgroundColor="Transparent"
-               TextColor="{AppThemeBinding Light=Black, Dark=White}"
-               Margin="8,4" />
+                                           Text="{Binding Comment}"
+                                           BackgroundColor="Transparent"
+                                           TextColor="{AppThemeBinding Light=Black, Dark=White}"
+                                           Margin="8,4" />
                                 </Frame>
-                                <Button Text="{Binding [ConfirmRoute_SendComment], Source={x:Static helpers:LocalizationResourceManager.Instance}}"
-                                        BackgroundColor="#1976D2"
-                                        TextColor="White"
-                                        Command="{Binding Source={x:Reference Page}, Path=SendCommentCommand}"
-                                        CommandParameter="{Binding .}" />
+                                <HorizontalStackLayout Spacing="10">
+                                    <Button Text="{Binding [ConfirmRoute_SendComment], Source={x:Static helpers:LocalizationResourceManager.Instance}}"
+                                            BackgroundColor="#1976D2"
+                                            TextColor="White"
+                                            Command="{Binding Source={x:Reference Page}, Path=SendCommentCommand}"
+                                            CommandParameter="{Binding .}" />
+                                    <Button Text="{Binding [ConfirmRoute_CancelButton], Source={x:Static helpers:LocalizationResourceManager.Instance}}"
+                                            BackgroundColor="#757575"
+                                            TextColor="White"
+                                            Command="{Binding Source={x:Reference Page}, Path=CancelRejectCommand}"
+                                            CommandParameter="{Binding .}" />
+                                </HorizontalStackLayout>
                             </VerticalStackLayout>
                         </VerticalStackLayout>
                     </Frame>

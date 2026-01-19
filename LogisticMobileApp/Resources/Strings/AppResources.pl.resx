@@ -360,4 +360,7 @@
   <data name="ConfirmRoute_StatusRejected" xml:space="preserve">
     <value>Odrzucone</value>
   </data>
+  <data name="ConfirmRoute_CancelButton" xml:space="preserve">
+    <value>Anuluj</value>
+  </data>
 </root>

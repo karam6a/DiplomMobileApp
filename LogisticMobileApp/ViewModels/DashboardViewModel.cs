@@ -117,8 +117,10 @@ public partial class DashboardViewModel : ObservableObject
                         LicensePlate = route.LicensePlate;
                         GeometryJson = route.GeometryJson;
 
-                        var nameParts = route.RouteName?.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-                        Name = nameParts != null && nameParts.Length > 1 ? nameParts[1] : route.RouteName ?? "";
+                        //var nameParts = route.RouteName?.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                        //Name = nameParts != null && nameParts.Length > 1 ? nameParts[1] : route.RouteName ?? "";
+
+                        Name = route.RouteName;
                         Status = route.Status;
 
                         Distance = (route.Distance / 1000).ToString("F1");

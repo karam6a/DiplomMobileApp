@@ -15,6 +15,7 @@ namespace LogisticMobileApp.Pages
         public ICommand ConfirmCommand { get; }
         public ICommand RejectCommand { get; }
         public ICommand SendCommentCommand { get; }
+        public ICommand CancelRejectCommand { get; }
         private readonly ApiService _apiService;
         private readonly List<ClientData> _clientsData;
         private readonly string? _geometryJson;
@@ -67,6 +68,9 @@ namespace LogisticMobileApp.Pages
                         // Обновляем локальный статус с комментарием
                         await _pickUpStatusService.RejectAsync(stop.Id, _routeId, stop.Comment);
                         
+                        // Помечаем комментарий как отправленный
+                        stop.IsCommentSent = true;
+                        
                         await Toast.Make(AppResources.ConfirmRoute_SendComment + " ✓", CommunityToolkit.Maui.Core.ToastDuration.Short).Show();
                         
                         // Пересортируем список
@@ -77,6 +81,16 @@ namespace LogisticMobileApp.Pages
                 {
                     await DisplayAlert("Ошибка", ex.Message, "OK");
                 }
+            });
+            
+            CancelRejectCommand = new Command<RouteStop>(stop =>
+            {
+                if (stop == null) return;
+                
+                // Сбрасываем состояние отклонения
+                stop.IsRejected = false;
+                stop.IsCommentSent = false;
+                stop.Comment = string.Empty;
             });
 
             _viewModel = new ConfirmRouteViewModel(clientsData);

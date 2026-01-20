@@ -12,6 +12,7 @@ using Mapsui.Tiling;
 using NetTopologySuite.Geometries;
 using System.Collections.ObjectModel;
 using System.Text.Json;
+using CommunityToolkit.Maui.Alerts;
 using Color = Mapsui.Styles.Color;
 using Brush = Mapsui.Styles.Brush;
 using Font = Mapsui.Styles.Font;
@@ -68,6 +69,7 @@ namespace LogisticMobileApp.Pages
         private readonly RoutingService _routingService;
         private readonly ApiService _apiService;
         private readonly PickUpStatusService _pickUpStatusService;
+        private readonly RouteHubService _hubService;
         private readonly int _routeId;
         private readonly List<MPoint> _markerPoints = new();
         private readonly List<MPoint> _originalMarkerPoints = new(); // Оригинальные маркеры
@@ -100,6 +102,7 @@ namespace LogisticMobileApp.Pages
             _routingService = new RoutingService();
             _apiService = apiService ?? App.Services.GetRequiredService<ApiService>();
             _pickUpStatusService = App.Services.GetRequiredService<PickUpStatusService>();
+            _hubService = App.Services.GetRequiredService<RouteHubService>();
             _routeId = Preferences.Get("RouteId", 0);
             
             // Сохраняем оригинальные индексы
@@ -116,6 +119,9 @@ namespace LogisticMobileApp.Pages
         {
             base.OnAppearing();
             
+            // Подписываемся на обновления маршрута
+            _hubService.OnRouteUpdated += HandleRouteUpdated;
+            
             if (!_isMapInitialized)
             {
                 _isMapInitialized = true;
@@ -128,6 +134,64 @@ namespace LogisticMobileApp.Pages
                     await Task.Delay(100);
                     await InitializeMapAsync();
                 });
+            }
+        }
+
+        protected override void OnDisappearing()
+        {
+            base.OnDisappearing();
+            
+            // Отписываемся от обновлений
+            _hubService.OnRouteUpdated -= HandleRouteUpdated;
+        }
+
+        private async void HandleRouteUpdated(RouteUpdatedDto data)
+        {
+            try
+            {
+                // Загружаем свежие данные маршрута с сервера
+                var route = await _apiService.GetMyRouteAsync();
+                if (route?.ClientsData != null && route.ClientsData.Count > 0)
+                {
+                    // Обновляем данные
+                    _clientsData.Clear();
+                    _clientsData.AddRange(route.ClientsData);
+                    
+                    _originalClientsOrder.Clear();
+                    _originalClientsOrder.AddRange(route.ClientsData);
+                    
+                    // Обновляем индексы
+                    _originalIndexMap.Clear();
+                    for (int i = 0; i < _clientsData.Count; i++)
+                    {
+                        _originalIndexMap[_clientsData[i].Id] = i + 1;
+                    }
+                    
+                    // Перепарсиваем координаты
+                    ParseClientCoordinates();
+                    
+                    // Переупорядочиваем по статусам
+                    await ReorderClientsByStatusAsync();
+                    
+                    // Обновляем список точек
+                    await PopulateRoutePointsListAsync();
+                    
+                    // Обновляем слои карты
+                    UpdateMapLayers();
+                    
+                    // Центрируем карту на всех точках
+                    var allPoints = new List<MPoint>();
+                    allPoints.AddRange(_markerPoints);
+                    if (_myLocationPoint != null)
+                        allPoints.Add(_myLocationPoint);
+                    CenterMapOnAllPoints(allPoints);
+                    
+                    System.Diagnostics.Debug.WriteLine($"[MapPage] Map refreshed with {_clientsData.Count} points");
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[MapPage] HandleRouteUpdated error: {ex.Message}");
             }
         }
 

@@ -7,6 +7,7 @@ using LogisticMobileApp.Resources.Strings;
 using LogisticMobileApp.ViewModels;
 using LogisticMobileApp.Services;
 using CommunityToolkit.Maui.Alerts;
+using Microsoft.AspNetCore.SignalR.Client;
 
 namespace LogisticMobileApp.Pages
 {
@@ -14,13 +15,15 @@ namespace LogisticMobileApp.Pages
     {
         private readonly DashboardViewModel ViewModel;
         private readonly ApiService _apiService;
+        private readonly RouteHubService _hubService;
 
-        public DashboardPage(DashboardViewModel viewModel, ApiService apiService)
+        public DashboardPage(DashboardViewModel viewModel, ApiService apiService, RouteHubService hubService)
         {
             InitializeComponent();
             BindingContext = viewModel;
             ViewModel = viewModel;
             _apiService = apiService;
+            _hubService = hubService;
             UpdateLanguage();
         }
 
@@ -31,6 +34,9 @@ namespace LogisticMobileApp.Pages
             
             // Перезагружаем данные при возврате на страницу
             await ViewModel.ReloadAsync();
+
+            // Запускаем SignalR подключение (если ещё не подключены)
+            await StartSignalRAsync();
         }
 
         private void UpdateLanguage()
@@ -38,6 +44,40 @@ namespace LogisticMobileApp.Pages
             var lang = Preferences.Get("Language", CultureInfo.CurrentUICulture.TwoLetterISOLanguageName);
             LocalizationResourceManager.Instance.SetCulture(new CultureInfo(lang));
         }
+
+        #region SignalR
+
+        private async Task StartSignalRAsync()
+        {
+            try
+            {
+                // Подписываемся на событие для обновления данных
+                // (тост показывается автоматически в RouteHubService)
+                _hubService.OnRouteUpdated -= HandleRouteUpdated;
+                _hubService.OnRouteUpdated += HandleRouteUpdated;
+
+                // Запускаем подключение если отключены
+                if (_hubService.State == HubConnectionState.Disconnected)
+                {
+                    await _hubService.StartAsync();
+                    System.Diagnostics.Debug.WriteLine("[Dashboard] SignalR connected");
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[Dashboard] SignalR connection failed: {ex.Message}");
+                // Не показываем ошибку пользователю — приложение работает и без SignalR
+            }
+        }
+
+        private async void HandleRouteUpdated(RouteUpdatedDto data)
+        {
+            // Тост уже показан автоматически в RouteHubService
+            // Здесь только перезагружаем данные маршрута
+            await ViewModel.ReloadAsync();
+        }
+
+        #endregion
 
         // Переход на страницу списка клиентов маршрута
         private async void OnShowRouteClicked(object sender, EventArgs e)

@@ -1,4 +1,4 @@
-﻿// ConfirmRoutePage.xaml.cs
+// ConfirmRoutePage.xaml.cs
 using System.Windows.Input;
 using Microsoft.Maui.Controls;
 using LogisticMobileApp.ViewModels;
@@ -17,6 +17,7 @@ namespace LogisticMobileApp.Pages
         public ICommand SendCommentCommand { get; }
         public ICommand CancelRejectCommand { get; }
         private readonly ApiService _apiService;
+        private readonly RouteHubService _hubService;
         private readonly List<ClientData> _clientsData;
         private readonly string? _geometryJson;
         private readonly PickUpStatusService _pickUpStatusService;
@@ -27,6 +28,7 @@ namespace LogisticMobileApp.Pages
         {
             InitializeComponent();
             _apiService = apiService;
+            _hubService = App.Services.GetRequiredService<RouteHubService>();
             _clientsData = clientsData;
             _geometryJson = geometryJson;
             _pickUpStatusService = new PickUpStatusService();
@@ -106,6 +108,9 @@ namespace LogisticMobileApp.Pages
         {
             base.OnAppearing();
             
+            // Подписываемся на обновления маршрута
+            _hubService.OnRouteUpdated += HandleRouteUpdated;
+            
             // Загружаем данные только при первом появлении страницы
             if (_isFirstAppearing)
             {
@@ -114,6 +119,41 @@ namespace LogisticMobileApp.Pages
                 // Даём UI время отрисоваться перед загрузкой
                 await Task.Delay(50);
                 await _viewModel.LoadStopsAsync();
+            }
+        }
+
+        protected override void OnDisappearing()
+        {
+            base.OnDisappearing();
+            
+            // Отписываемся от обновлений
+            _hubService.OnRouteUpdated -= HandleRouteUpdated;
+        }
+
+        private async void HandleRouteUpdated(RouteUpdatedDto data)
+        {
+            try
+            {
+                // Загружаем свежие данные маршрута с сервера
+                var route = await _apiService.GetMyRouteAsync();
+                if (route?.ClientsData != null && route.ClientsData.Count > 0)
+                {
+                    // Обновляем локальный список
+                    _clientsData.Clear();
+                    _clientsData.AddRange(route.ClientsData);
+                    
+                    // Создаём новый ViewModel с обновлёнными данными
+                    _viewModel = new ConfirmRouteViewModel(_clientsData);
+                    _viewModel.PropertyChanged += ViewModel_PropertyChanged;
+                    BindingContext = _viewModel;
+                    
+                    // Загружаем точки
+                    await _viewModel.LoadStopsAsync();
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[ConfirmRoutePage] HandleRouteUpdated error: {ex.Message}");
             }
         }
         

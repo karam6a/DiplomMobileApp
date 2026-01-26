@@ -39,12 +39,14 @@
 
                 <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="10">
 
-                    <Label Text="{Binding [Driver_Label], Source={x:Static helpers:LocalizationResourceManager.Instance}}" 
+                    <Label x:Name="DriverLabel"
+                           Text="{Binding [Driver_Label], Source={x:Static helpers:LocalizationResourceManager.Instance}}" 
                            FontSize="24" 
                            FontAttributes="Bold" 
                            TextColor="{AppThemeBinding Light={StaticResource MutedTextLight}, Dark={StaticResource MutedTextDark}}" />
 
-                    <Label Grid.Row="1" 
+                    <Label x:Name="DriverNameLabel"
+                           Grid.Row="1" 
                            Text="{Binding DriverName}" 
                            FontSize="22" 
                            FontAttributes="Bold" 
@@ -293,7 +295,7 @@
 
                     <Grid Grid.Row="3" ColumnDefinitions="auto,*" ColumnSpacing="10"
                           IsVisible="{Binding IsRouteLoaded}">
-                        <Button Grid.Column="0" Text="{Binding [ShowRouteLabel], Source={x:Static helpers:LocalizationResourceManager.Instance}}" FontSize="15" BackgroundColor="#7B68EE" Clicked="OnShowRouteClicked"/>
+                        <Button x:Name="ShowRouteButton" Grid.Column="0" Text="{Binding [ShowRouteLabel], Source={x:Static helpers:LocalizationResourceManager.Instance}}" FontSize="15" BackgroundColor="#7B68EE" Clicked="OnShowRouteClicked"/>
                         <Button x:Name="StartRouteButton" Grid.Column="1" 
                                 Text="{Binding [StartButtonText], Source={x:Static helpers:LocalizationResourceManager.Instance}}" 
                                 FontSize="15" 
@@ -312,7 +314,8 @@
 
             <!-- Кнопки -->
 
-            <Button Text="{Binding [ExitButton], Source={x:Static helpers:LocalizationResourceManager.Instance}}" 
+            <Button x:Name="LogoutButton"
+                    Text="{Binding [ExitButton], Source={x:Static helpers:LocalizationResourceManager.Instance}}" 
                     Clicked="OnLogoutClicked" 
                     BackgroundColor="#D32F2F" 
                     TextColor="White"

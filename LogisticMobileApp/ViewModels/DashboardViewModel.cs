@@ -9,6 +9,7 @@ namespace LogisticMobileApp.ViewModels;
 public partial class DashboardViewModel : ObservableObject
 {
     private readonly ApiService _api;
+    private readonly RouteHubService _routeHub;
 
     [ObservableProperty]
     private string driverName = "Загрузка...";

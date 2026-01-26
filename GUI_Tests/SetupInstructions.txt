@@ -1,0 +1,188 @@
+===============================================================================
+                    ИНСТРУКЦИЯ ПО ЗАПУСКУ GUI ТЕСТОВ
+===============================================================================
+
+Есть ДВА варианта тестирования:
+  A) На реальном Android устройстве (рекомендуется)
+  B) На Windows (WinAppDriver)
+
+===============================================================================
+          ВАРИАНТ A: ТЕСТИРОВАНИЕ НА ANDROID УСТРОЙСТВЕ (USB)
+===============================================================================
+
+ТРЕБОВАНИЯ:
+-----------
+1. Node.js (для установки Appium)
+2. Appium Server 2.x
+3. Android SDK (можно через Android Studio)
+4. Телефон Android с включенной отладкой по USB
+5. .NET 9.0 SDK
+
+ШАГ 1: УСТАНОВКА APPIUM
+-----------------------
+# Установите Appium глобально через npm
+npm install -g appium
+
+# Установите UIAutomator2 драйвер для Android
+appium driver install uiautomator2
+
+# Проверьте установку
+appium driver list
+
+ШАГ 2: НАСТРОЙКА ANDROID УСТРОЙСТВА
+-----------------------------------
+1. Включите "Режим разработчика" на телефоне:
+   - Настройки -> О телефоне -> Нажмите 7 раз на "Номер сборки"
+
+2. Включите "Отладка по USB":
+   - Настройки -> Для разработчиков -> Отладка по USB (включить)
+
+3. Подключите телефон по USB к компьютеру
+
+4. Разрешите отладку при появлении запроса на телефоне
+
+5. Проверьте что устройство видно:
+   adb devices
+   
+   Должно показать что-то вроде:
+   List of devices attached
+   XXXXXXXX    device
+
+ШАГ 3: РАЗВЕРНИТЕ ПРИЛОЖЕНИЕ НА ТЕЛЕФОН
+---------------------------------------
+В Visual Studio:
+1. Выберите конфигурацию: net9.0-android
+2. Выберите ваше устройство в списке
+3. Нажмите F5 (Debug) или Ctrl+F5 (Run without debugging)
+
+Или через командную строку:
+   cd LogisticMobileApp
+   dotnet build -f net9.0-android -t:Install
+
+ШАГ 4: УЗНАЙТЕ PACKAGE NAME И ACTIVITY
+--------------------------------------
+Package name указан в AndroidManifest.xml или определяется по ApplicationId.
+По умолчанию для MAUI: com.companyname.logisticmobileapp
+
+Для проверки выполните (когда приложение открыто на телефоне):
+   adb shell dumpsys window | findstr mCurrentFocus
+
+Это покажет текущий package и activity.
+
+Отредактируйте файл GUI_Tests/Base/AndroidTestBase.cs:
+   - AppPackage = "com.companyname.logisticmobileapp"
+   - AppActivity = "crc64e1fb321c08285b90.MainActivity"
+
+ШАГ 5: ЗАПУСТИТЕ APPIUM СЕРВЕР
+------------------------------
+   appium
+
+   Должен запуститься на http://127.0.0.1:4723/
+
+ШАГ 6: ЗАПУСТИТЕ ТЕСТЫ
+----------------------
+   cd GUI_Tests
+   dotnet test --filter "FullyQualifiedName~Android"
+
+   Это запустит только Android тесты.
+
+===============================================================================
+          ВАРИАНТ B: ТЕСТИРОВАНИЕ НА WINDOWS (WINAPPDRIVER)
+===============================================================================
+
+ТРЕБОВАНИЯ:
+-----------
+1. WinAppDriver - Windows Application Driver
+2. Скомпилированное приложение LogisticMobileApp для Windows
+3. .NET 9.0 SDK
+
+УСТАНОВКА WINAPPDRIVER:
+-----------------------
+1. Скачайте WinAppDriver с GitHub:
+   https://github.com/microsoft/WinAppDriver/releases
+   
+2. Установите WinAppDriver (обычно в C:\Program Files (x86)\Windows Application Driver)
+
+3. Включите режим разработчика в Windows:
+   - Настройки -> Обновление и безопасность -> Для разработчиков
+   - Включите "Режим разработчика"
+
+ПЕРЕД ЗАПУСКОМ ТЕСТОВ:
+----------------------
+1. Соберите приложение LogisticMobileApp для Windows:
+   
+   cd LogisticMobileApp
+   dotnet build -f net9.0-windows10.0.19041.0
+   
+   Или через Visual Studio: выберите конфигурацию Windows и соберите проект.
+
+2. Проверьте путь к приложению в файле:
+   GUI_Tests/Base/AppiumTestBase.cs
+   
+   Текущий путь:
+   C:\Users\User\source\repos\LogisticMobileApp\LogisticMobileApp\bin\Debug\net9.0-windows10.0.19041.0\win10-x64\LogisticMobileApp.exe
+
+3. Запустите WinAppDriver от имени администратора:
+   
+   "C:\Program Files (x86)\Windows Application Driver\WinAppDriver.exe"
+   
+   Должен запуститься сервер на http://127.0.0.1:4723/
+
+ЗАПУСК WINDOWS ТЕСТОВ:
+----------------------
+   cd GUI_Tests
+   dotnet test --filter "FullyQualifiedName~AppLaunchTests or FullyQualifiedName~RegisterPageTests" --filter "FullyQualifiedName!~Android"
+
+Или через Visual Studio:
+   - Откройте Test Explorer (Тест -> Test Explorer)
+   - Нажмите "Run All" или выберите конкретные тесты
+
+СТРУКТУРА ТЕСТОВ:
+-----------------
+- Base/AppiumTestBase.cs    - Базовый класс с настройкой Appium
+- Tests/AppLaunchTests.cs   - Тесты запуска приложения
+- Tests/RegisterPageTests.cs - Тесты страницы регистрации
+
+ДОБАВЛЕНИЕ НОВЫХ ТЕСТОВ:
+------------------------
+1. Создайте новый класс в папке Tests/
+2. Наследуйте от AppiumTestBase
+3. Добавьте x:Name к элементам XAML которые хотите тестировать
+4. Используйте методы FindByAutomationId(), FindByName(), FindByXPath()
+
+ПРИМЕР:
+-------
+public class MyPageTests : AppiumTestBase
+{
+    [Fact]
+    public void MyTest()
+    {
+        var button = FindByAutomationId("MyButton");
+        button.Click();
+        Assert.True(ElementExists("ExpectedElement"));
+    }
+}
+
+СКРИНШОТЫ:
+----------
+Тесты автоматически сохраняют скриншоты в папку:
+GUI_Tests/bin/Debug/net9.0/Screenshots/
+
+TROUBLESHOOTING:
+----------------
+1. "Could not find any recognizable digits" 
+   -> WinAppDriver не запущен
+
+2. "Element not found"
+   -> Добавьте x:Name к элементу в XAML
+   -> Увеличьте таймаут ожидания
+
+3. "Application not found"
+   -> Проверьте путь к .exe файлу
+   -> Убедитесь что приложение собрано
+
+4. Тесты зависают
+   -> Закройте все экземпляры приложения вручную
+   -> Перезапустите WinAppDriver
+
+===============================================================================

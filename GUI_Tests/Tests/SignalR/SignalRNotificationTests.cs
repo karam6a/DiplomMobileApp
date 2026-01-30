@@ -18,7 +18,7 @@ public class SignalRNotificationTests
 {
     private const string HubUrl = "https://esme-aspiratory-september.ngrok-free.dev/hubs/notifications";
 
-    [Fact(Skip = "Требует запущенный сервер и ручную отправку уведомления")]
+    [Fact]
     public async Task SignalR_ShouldReceive_RouteUpdatedNotification()
     {
         // Arrange
@@ -76,7 +76,7 @@ public class SignalRNotificationTests
         }
     }
 
-    [Fact(Skip = "Требует запущенный сервер")]
+    [Fact]
     public async Task SignalR_ShouldConnect_WithoutErrors()
     {
         // Arrange
@@ -104,7 +104,7 @@ public class SignalRNotificationTests
         }
     }
 
-    [Fact(Skip = "Требует запущенный сервер")]
+    [Fact]
     public async Task SignalR_ShouldReconnect_AfterDisconnect()
     {
         // Arrange

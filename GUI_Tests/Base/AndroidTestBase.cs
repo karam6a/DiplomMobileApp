@@ -32,37 +32,17 @@ public abstract class AndroidTestBase : IDisposable
             PlatformName = "Android",
             AutomationName = "UiAutomator2"
         };
-        
-        // Настройки для подключения к устройству
-        // Если устройство одно - можно не указывать udid, Appium найдет автоматически
-        // options.AddAdditionalAppiumOption("udid", "YOUR_DEVICE_ID"); // Раскомментируйте если нужно
-        
-        // Используем уже установленное приложение (не устанавливаем APK)
+
         options.AddAdditionalAppiumOption("appPackage", AppPackage);
         options.AddAdditionalAppiumOption("appActivity", AppActivity);
-        
-        // Не сбрасывать приложение между тестами
         options.AddAdditionalAppiumOption("noReset", true);
-        
-        // Таймаут запуска приложения
         options.AddAdditionalAppiumOption("appWaitDuration", 30000);
-        
-        // Не скрывать клавиатуру автоматически
         options.AddAdditionalAppiumOption("unicodeKeyboard", false);
         options.AddAdditionalAppiumOption("resetKeyboard", false);
-        
-        // Игнорировать ошибку hidden API policy (для Android 9+)
         options.AddAdditionalAppiumOption("ignoreHiddenApiPolicyError", true);
-        
-        // Пропустить установку сервера UIAutomator2 если уже установлен
         options.AddAdditionalAppiumOption("skipServerInstallation", false);
-        
-        // Не пытаться изменять настройки hidden API
-        options.AddAdditionalAppiumOption("suppressKillServer", true);
-        
+        options.AddAdditionalAppiumOption("suppressKillServer", true); 
         Driver = new AndroidDriver(new Uri(AppiumServerUrl), options);
-        
-        // Неявное ожидание элементов
         Driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(10);
     }
 

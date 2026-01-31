@@ -297,18 +297,45 @@ namespace LogisticMobileApp.Pages
 
             if (!answer) return;
 
+            try
+            {
+                // 1. Останавливаем фоновый сервис (это уберет уведомление из шторки Android)
+                _backgroundService.Stop();
+
+                // 2. Явно останавливаем стриминг координат (закрываем gRPC каналы и GPS listener)
+                // Это гарантирует, что цикл while прервется корректно
+                await _gpsService.StopTrackingAsync();
+
+                // 3. Отключаемся от SignalR (если подключены)
+                await _hubService.StopAsync(); // Если у вас есть метод Stop/Disconnect
+
+                // 4. Очищаем данные пользователя (чтобы при следующем запуске потребовался логин)
+                Preferences.Clear();
+                SecureStorage.Default.RemoveAll();
+
+                // 5. Небольшая пауза (500мс), чтобы Android успел обработать Intent остановки сервиса
+                // перед тем, как мы жестко убьем процесс. Без этого уведомление может остаться висеть.
+                await Task.Delay(500);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Ошибка при выходе: {ex.Message}");
+            }
+
+            // --- КОНЕЦ: ОЧИСТКА РЕСУРСОВ ---
+
 #if ANDROID
+            // Теперь можно убивать процесс со спокойной совестью
             Android.OS.Process.KillProcess(Android.OS.Process.MyPid());
 #elif IOS
-            // iOS �� ��������� ������� ���������� ����������
-            System.Diagnostics.Process.GetCurrentProcess().CloseMainWindow();
+    // iOS не приветствует программное закрытие, но если очень надо:
+    System.Diagnostics.Process.GetCurrentProcess().CloseMainWindow();
 #elif WINDOWS || MACCATALYST
-            Application.Current.Quit();
+    Application.Current.Quit();
 #else
-            System.Diagnostics.Process.GetCurrentProcess().Kill();
+    System.Diagnostics.Process.GetCurrentProcess().Kill();
 #endif
         }
-
         public event PropertyChangedEventHandler? PropertyChanged;
         protected void OnPropertyChanged(string propertyName) =>
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));

@@ -1,13 +1,14 @@
+using CommunityToolkit.Maui.Alerts;
+using LogisticMobileApp.Helpers;
+using LogisticMobileApp.Resources.Strings;
+using LogisticMobileApp.Services;
+using LogisticMobileApp.Services.LocationStreaming;
+using LogisticMobileApp.ViewModels;
+using Microsoft.AspNetCore.SignalR.Client;
+using Microsoft.Maui.Storage;
 using System;
 using System.ComponentModel;
 using System.Globalization;
-using Microsoft.Maui.Storage;
-using LogisticMobileApp.Helpers;
-using LogisticMobileApp.Resources.Strings;
-using LogisticMobileApp.ViewModels;
-using LogisticMobileApp.Services;
-using CommunityToolkit.Maui.Alerts;
-using Microsoft.AspNetCore.SignalR.Client;
 
 namespace LogisticMobileApp.Pages
 {
@@ -16,14 +17,15 @@ namespace LogisticMobileApp.Pages
         private readonly DashboardViewModel ViewModel;
         private readonly ApiService _apiService;
         private readonly RouteHubService _hubService;
-
-        public DashboardPage(DashboardViewModel viewModel, ApiService apiService, RouteHubService hubService)
+        private readonly GpsStreamingService _gpsService;
+        public DashboardPage(DashboardViewModel viewModel, ApiService apiService, RouteHubService hubService, GpsStreamingService gps)
         {
             InitializeComponent();
             BindingContext = viewModel;
             ViewModel = viewModel;
             _apiService = apiService;
             _hubService = hubService;
+            _gpsService = gps;
             UpdateLanguage();
         }
 
@@ -37,6 +39,8 @@ namespace LogisticMobileApp.Pages
 
             // Запускаем SignalR подключение (если ещё не подключены)
             await StartSignalRAsync();
+
+            await _gpsService.StartTrackingAsync();
         }
 
         private void UpdateLanguage()

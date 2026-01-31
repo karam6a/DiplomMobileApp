@@ -1,0 +1,21 @@
+﻿syntax = "proto3";
+
+option csharp_namespace = "logistics_server.Services.LocationStreaming";
+
+package geostreaming;
+
+service TrackingService {
+  // Client Streaming: Клиент льет поток, сервер отвечает один раз в конце
+  rpc SendCoordinates (stream LocationMessage) returns (TrackingResponse);
+}
+
+message LocationMessage {
+  double latitude = 1;
+  double longitude = 2;
+  double speed = 3;
+  int64 timestamp = 4; // Unix time (milliseconds)
+}
+
+message TrackingResponse {
+  bool success = 1;
+}

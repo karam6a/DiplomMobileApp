@@ -7,6 +7,8 @@ using LogisticMobileApp.Services;
 using CommunityToolkit.Maui;
 using SkiaSharp.Views.Maui.Controls.Hosting;
 using DevExpress.Maui;
+using LogisticMobileApp.Services.LocationStreaming;
+
 
 
 #if ANDROID
@@ -51,8 +53,10 @@ public static class MauiProgram
         builder.Services.AddTransient<MainPage>();
         builder.Services.AddTransient<DashboardViewModel>();
         builder.Services.AddTransient<DashboardPage>();
+        builder.Services.AddSingleton<GpsStreamingService>();
 #if ANDROID
         builder.Services.AddSingleton<IDeviceHelper, DeviceHelper>();
+        builder.Services.AddSingleton<IGpsListener, Platforms.Android.AndroidGpsListener>();
 #else
         builder.Services.AddSingleton<IDeviceHelper>(sp => throw new NotSupportedException());
 #endif
@@ -61,8 +65,8 @@ public static class MauiProgram
 #if DEBUG
         builder.Logging.AddDebug();
 #endif
-
-		var app = builder.Build();
+        builder.Services.AddSingleton<GpsStreamingService>();
+        var app = builder.Build();
         return app;
     }
 }

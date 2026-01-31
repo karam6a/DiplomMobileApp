@@ -18,7 +18,8 @@ namespace LogisticMobileApp.Pages
         private readonly ApiService _apiService;
         private readonly RouteHubService _hubService;
         private readonly GpsStreamingService _gpsService;
-        public DashboardPage(DashboardViewModel viewModel, ApiService apiService, RouteHubService hubService, GpsStreamingService gps)
+        private readonly IBackgroundService _backgroundService;
+        public DashboardPage(DashboardViewModel viewModel, ApiService apiService, RouteHubService hubService, GpsStreamingService gps, IBackgroundService backgroundService)
         {
             InitializeComponent();
             BindingContext = viewModel;
@@ -27,6 +28,7 @@ namespace LogisticMobileApp.Pages
             _hubService = hubService;
             _gpsService = gps;
             UpdateLanguage();
+            _backgroundService = backgroundService;
         }
 
         protected override async void OnAppearing()
@@ -40,8 +42,101 @@ namespace LogisticMobileApp.Pages
             // Запускаем SignalR подключение (если ещё не подключены)
             await StartSignalRAsync();
 
-            await _gpsService.StartTrackingAsync();
+            if (!string.IsNullOrEmpty(ViewModel.DriverName))
+            {
+                // 1. Сначала просим все разрешения
+                bool hasPermissions = await CheckAndRequestPermissions();
+
+                // 2. Если пользователь отказал, не запускаем сервис, иначе будет краш
+                if (!hasPermissions)
+                {
+                    await DisplayAlert("Ошибка", "Без доступа к геолокации приложение не может работать.", "OK");
+                    return;
+                }
+
+                // 3. Отключаем оптимизацию батареи (чтобы не убило через 5 минут)
+                await RequestBatteryOptimization();
+
+                // 4. Запускаем сервис
+                _backgroundService.Start(ViewModel.DriverName, ViewModel.LicensePlate);
+            }
         }
+
+        
+
+
+
+
+        private async Task<bool> CheckAndRequestPermissions()
+        {
+            // 1. Разрешение на УВЕДОМЛЕНИЯ (Android 13+)
+            // Без этого Foreground Service не запустится
+            if (Permissions.ShouldShowRationale<Permissions.PostNotifications>())
+            {
+                await DisplayAlert("Разрешение", "Приложению нужны уведомления, чтобы показывать статус работы GPS.", "OK");
+            }
+
+            var statusNotif = await Permissions.CheckStatusAsync<Permissions.PostNotifications>();
+            if (statusNotif != PermissionStatus.Granted)
+            {
+                statusNotif = await Permissions.RequestAsync<Permissions.PostNotifications>();
+            }
+
+            // 2. Разрешение на ГЕОЛОКАЦИЮ (При использовании)
+            // Это база для работы GPS
+            var statusGeo = await Permissions.CheckStatusAsync<Permissions.LocationWhenInUse>();
+            if (statusGeo != PermissionStatus.Granted)
+            {
+                // Если нужно, показываем объяснение
+                if (Permissions.ShouldShowRationale<Permissions.LocationWhenInUse>())
+                {
+                    await DisplayAlert("Геолокация", "Нам нужен доступ к GPS для отслеживания маршрута.", "Понятно");
+                }
+                statusGeo = await Permissions.RequestAsync<Permissions.LocationWhenInUse>();
+            }
+
+            // 3. Разрешение на ГЕОЛОКАЦИЮ (Всегда/В фоне) - Опционально, но желательно для Android 10+
+            // Android может потребовать отдельного подтверждения для "Always Allow"
+            var statusBackground = await Permissions.CheckStatusAsync<Permissions.LocationAlways>();
+            if (statusBackground != PermissionStatus.Granted)
+            {
+                // Обычно сначала просят WhenInUse, а потом Always. 
+                // Можно попробовать запросить, но если откажут - сервис все равно будет работать как Foreground Service
+                await Permissions.RequestAsync<Permissions.LocationAlways>();
+            }
+
+            // Возвращаем true, если базовое разрешение на GPS получено
+            return statusGeo == PermissionStatus.Granted;
+        }
+
+        private async Task RequestBatteryOptimization()
+        {
+#if ANDROID
+            try
+            {
+                var pm = (Android.OS.PowerManager)Android.App.Application.Context.GetSystemService(Android.Content.Context.PowerService);
+                var packageName = Android.App.Application.Context.PackageName;
+
+                if (!pm.IsIgnoringBatteryOptimizations(packageName))
+                {
+                    bool result = await DisplayAlert("Настройка", "Отключите экономию заряда для стабильной работы GPS в фоне.", "Настройки", "Отмена");
+                    if (result)
+                    {
+                        var intent = new Android.Content.Intent();
+                        intent.SetAction(Android.Provider.Settings.ActionRequestIgnoreBatteryOptimizations);
+                        intent.SetData(Android.Net.Uri.Parse("package:" + packageName));
+                        intent.SetFlags(Android.Content.ActivityFlags.NewTask);
+                        Platform.CurrentActivity.StartActivity(intent);
+                    }
+                }
+            }
+            catch { }
+#endif
+            await Task.CompletedTask;
+        }
+
+
+        
 
         private void UpdateLanguage()
         {

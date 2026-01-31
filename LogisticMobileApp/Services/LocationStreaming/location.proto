@@ -13,7 +13,9 @@ message LocationMessage {
   double latitude = 1;
   double longitude = 2;
   double speed = 3;
-  int64 timestamp = 4; // Unix time (milliseconds)
+  int64 timestamp = 4;
+  string driver_name = 5;
+  string license_plate = 6;
 }
 
 message TrackingResponse {

@@ -2,7 +2,8 @@
 using Grpc.Net.Client;
 using Grpc.Net.Client.Web;
 using Microsoft.Maui.Devices.Sensors;
-using System.Threading.Channels; // !!! ВАЖНО: Добавить этот using
+using System.Threading.Channels;
+using System.Diagnostics; // Для Debug.WriteLine
 using TrackingService = logistics_server.Services.LocationStreaming.TrackingService;
 using LocationMessage = logistics_server.Services.LocationStreaming.LocationMessage;
 using TrackingResponse = logistics_server.Services.LocationStreaming.TrackingResponse;
@@ -12,38 +13,31 @@ namespace LogisticMobileApp.Services.LocationStreaming
     public class GpsStreamingService
     {
         private readonly IGpsListener _gpsListener;
-        private const string ServerUrl = "https://esme-aspiratory-september.ngrok-free.dev"; // Проверьте протокол
+        private const string ServerUrl = "https://esme-aspiratory-september.ngrok-free.dev";
 
-        // Буфер для координат (бесконечный или ограниченный)
         private Channel<LocationMessage> _locationChannel;
         private CancellationTokenSource _cts;
         private bool _isRunning = false;
+
+        private string _currentDriverName = string.Empty;
+        private string _currentLicensePlate = string.Empty;
 
         public GpsStreamingService(IGpsListener gpsListener)
         {
             _gpsListener = gpsListener;
         }
 
-        public async Task StartTrackingAsync()
+        public async Task StartTrackingAsync(string driverName, string licensePlate)
         {
             if (_isRunning) return;
+
+            System.Diagnostics.Debug.WriteLine($"[Service DIAGNOSTIC] Зашел в StartTrackingAsync. Имя: {driverName}");
+
+            _currentDriverName = driverName ?? "Unknown Driver";
+            _currentLicensePlate = licensePlate ?? "Unknown Plate";
             _isRunning = true;
 
-            // 1. Проверяем права (Permissions)
-            var status = await Permissions.CheckStatusAsync<Permissions.LocationWhenInUse>();
-            if (status != PermissionStatus.Granted)
-            {
-                status = await Permissions.RequestAsync<Permissions.LocationWhenInUse>();
-                if (status != PermissionStatus.Granted)
-                {
-                    _isRunning = false;
-                    return;
-                }
-            }
-
-            // 2. Создаем канал (очередь)
-            // Bounded(100) означает, что если интернета нет долго, мы сохраним последние 100 точек,
-            // а старые начнем выбрасывать, чтобы не забить память.
+            // 1. Создаем канал (Это можно делать в фоне)
             _locationChannel = Channel.CreateBounded<LocationMessage>(new BoundedChannelOptions(100)
             {
                 FullMode = BoundedChannelFullMode.DropOldest
@@ -51,18 +45,48 @@ namespace LogisticMobileApp.Services.LocationStreaming
 
             _cts = new CancellationTokenSource();
 
-            // 3. Подписываемся на GPS (Производитель)
-            _gpsListener.LocationChanged += HandleLocationUpdate;
-            _gpsListener.StartListening();
+            // 2. ЗАПУСК GPS (СТРОГО В ГЛАВНОМ ПОТОКЕ)
+            // Android требует Looper для GPS слушателей. В фоне его нет.
+            // Поэтому переключаемся на MainThread только для подписки.
+            try
+            {
+                await MainThread.InvokeOnMainThreadAsync(async () =>
+                {
+                    // Проверка прав тоже любит MainThread
+                    var status = await Permissions.CheckStatusAsync<Permissions.LocationWhenInUse>();
+                    if (status != PermissionStatus.Granted)
+                    {
+                        System.Diagnostics.Debug.WriteLine("[Service ERROR] Нет прав! Выходим.");
+                        _isRunning = false;
+                        return;
+                    }
 
-            Console.WriteLine("[Service] GPS Listener started.");
+                    // Самое важное исправление:
+                    _gpsListener.LocationChanged += HandleLocationUpdate;
+                    _gpsListener.StartListening();
 
-            // 4. Запускаем фоновую задачу отправки (Потребитель)
-            // Мы не ждем ее (no await), она крутится сама по себе
+                    System.Diagnostics.Debug.WriteLine($"[Service SUCCESS] GPS Listener успешно запущен (MainThread)!");
+                });
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[Service CRASH] Ошибка при старте GPS на MainThread: {ex}");
+                _isRunning = false;
+                return;
+            }
+
+            // Если мы вылетели из-за ошибки или прав
+            if (!_isRunning) return;
+
+            // 3. Запуск сетевого цикла (ЭТО ОСТАВЛЯЕМ В ФОНЕ)
+            // Сеть в MainThread запускать нельзя, поэтому тут Task.Run
             _ = Task.Run(() => ProcessQueueAsync(_cts.Token));
 
-            // 5. Принудительная отправка первой точки (как мы обсуждали)
-            _ = Task.Run(async () => await ForceSendInitialLocation());
+            // 4. Принудительная первая точка (Тоже лучше через MainThread для доступа к Geolocation)
+            _ = Task.Run(async () =>
+            {
+                await MainThread.InvokeOnMainThreadAsync(async () => await ForceSendInitialLocation());
+            });
         }
 
         public async Task StopTrackingAsync()
@@ -70,42 +94,53 @@ namespace LogisticMobileApp.Services.LocationStreaming
             if (!_isRunning) return;
             _isRunning = false;
 
-            _gpsListener.StopListening();
-            _gpsListener.LocationChanged -= HandleLocationUpdate;
+            try
+            {
+                _gpsListener.StopListening();
+                _gpsListener.LocationChanged -= HandleLocationUpdate;
 
-            // Отменяем фоновую задачу отправки
-            _cts?.Cancel();
+                _cts?.Cancel();
+                // Небольшая задержка, чтобы циклы успели остановиться
+                await Task.Delay(200);
+                _cts?.Dispose();
 
-            // Ждем немного, чтобы канал успел закрыться (опционально)
-            await Task.Delay(100);
-            _cts?.Dispose();
-
-            Console.WriteLine("[Service] Stopped.");
+                Debug.WriteLine("[Service] Stopped.");
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[Service] Stop error: {ex.Message}");
+            }
         }
 
-        // --- ПРОИЗВОДИТЕЛЬ (GPS Event) ---
-        // Этот метод просто кидает данные в буфер. Он работает мгновенно и не зависит от сети.
+        // --- PRODUCER (GPS) ---
         private void HandleLocationUpdate(object sender, Location location)
         {
+            // Лог получения координат (раскомментируйте для отладки, если нужно)
+            // Debug.WriteLine($"[GPS Event] New Fix: {location.Latitude}, {location.Longitude}");
+
             var msg = new LocationMessage
             {
                 Latitude = location.Latitude,
                 Longitude = location.Longitude,
                 Speed = location.Speed ?? 0,
-                Timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()
+                Timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
+                DriverName = _currentDriverName,
+                LicensePlate = _currentLicensePlate
             };
 
-            // TryWrite вернет false, если буфер переполнен (мы настроили удалять старые),
-            // так что это безопасно.
-            _locationChannel.Writer.TryWrite(msg);
-            // Console.WriteLine($"[Buffer] Added: {msg.Latitude}, {msg.Longitude}");
+            if (!_locationChannel.Writer.TryWrite(msg))
+            {
+                Debug.WriteLine("[Buffer] Буфер полон, старая точка отброшена");
+            }
         }
 
-        // --- ПОТРЕБИТЕЛЬ (Сетевой цикл) ---
-        // Вся магия реконнекта здесь
+        // --- CONSUMER (NETWORK) ---
         private async Task ProcessQueueAsync(CancellationToken token)
         {
-            Console.WriteLine("[Loop] Starting send loop...");
+            Debug.WriteLine("[Loop] Starting send loop...");
+
+            // Чтобы на схеме было понятно, как данные перетекают
+
 
             while (!token.IsCancellationRequested)
             {
@@ -114,7 +149,6 @@ namespace LogisticMobileApp.Services.LocationStreaming
 
                 try
                 {
-                    // 1. Настройка соединения
                     var innerHandler = new SocketsHttpHandler
                     {
                         PooledConnectionIdleTimeout = Timeout.InfiniteTimeSpan,
@@ -122,49 +156,44 @@ namespace LogisticMobileApp.Services.LocationStreaming
                         KeepAlivePingTimeout = TimeSpan.FromSeconds(30),
                         EnableMultipleHttp2Connections = true
                     };
+
+                    // Для Android эмулятора иногда нужен обход SSL
                     innerHandler.SslOptions.RemoteCertificateValidationCallback = (s, c, ch, e) => true;
 
                     var grpcWebHandler = new GrpcWebHandler(GrpcWebMode.GrpcWebText, innerHandler);
 
-                    // Создаем канал
                     channel = GrpcChannel.ForAddress(ServerUrl, new GrpcChannelOptions { HttpHandler = grpcWebHandler });
                     var client = new TrackingService.TrackingServiceClient(channel);
 
-                    // Заголовки
                     var deviceId = Preferences.Get("device_id", Guid.NewGuid().ToString());
                     var headers = new Metadata { { "x-device-id", deviceId } };
 
-                    Console.WriteLine("[Loop] Connecting to server...");
+                    Debug.WriteLine("[Loop] Connecting to server...");
                     call = client.SendCoordinates(headers, cancellationToken: token);
-                    Console.WriteLine("[Loop] Connected!");
+                    Debug.WriteLine("[Loop] Connected!");
 
-                    // 2. Читаем из буфера и отправляем
-                    // WaitToReadAsync будет ждать, пока в буфере что-то появится (не грузит процессор)
+                    // Читаем из канала
                     while (await _locationChannel.Reader.WaitToReadAsync(token))
                     {
                         while (_locationChannel.Reader.TryRead(out var msg))
                         {
                             await call.RequestStream.WriteAsync(msg);
-                            Console.WriteLine($"[Network] >>> Sent: {msg.Latitude}, {msg.Longitude}");
+                            Debug.WriteLine($"[Network] >>> Sent: {msg.Latitude}, {msg.Longitude}");
                         }
                     }
                 }
                 catch (OperationCanceledException)
                 {
-                    // Нормальная остановка
                     break;
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"[Loop] Error (Disconnect): {ex.Message}");
-                    // 3. Логика ПЕРЕПОДКЛЮЧЕНИЯ
-                    // Если произошла ошибка, мы просто идем на новый круг while.
-                    // Но сначала ждем пару секунд, чтобы не дудосить сервер.
-                    await Task.Delay(3000, token);
+                    Debug.WriteLine($"[Loop] Error (Disconnect): {ex.Message}");
+                    // Ждем перед реконнектом
+                    await Task.Delay(5000, token);
                 }
                 finally
                 {
-                    // Чистим ресурсы перед следующей попыткой
                     if (call != null) try { await call.RequestStream.CompleteAsync(); call.Dispose(); } catch { }
                     if (channel != null) try { channel.Dispose(); } catch { }
                 }
@@ -176,19 +205,28 @@ namespace LogisticMobileApp.Services.LocationStreaming
             try
             {
                 var location = await Geolocation.Default.GetLastKnownLocationAsync();
+
+                // Если LastKnown нет, пробуем получить текущую (с тайм-аутом)
                 if (location == null)
                 {
-                    var request = new GeolocationRequest(GeolocationAccuracy.Medium, TimeSpan.FromSeconds(5));
+                    var request = new GeolocationRequest(GeolocationAccuracy.Medium, TimeSpan.FromSeconds(3));
                     location = await Geolocation.Default.GetLocationAsync(request);
                 }
 
                 if (location != null)
                 {
-                    HandleLocationUpdate(this, location); // Просто кидаем в тот же буфер
-                    Console.WriteLine("[GPS] Initial location queued.");
+                    HandleLocationUpdate(this, location);
+                    Debug.WriteLine("[GPS] Initial location queued.");
+                }
+                else
+                {
+                    Debug.WriteLine("[GPS] No initial location available.");
                 }
             }
-            catch (Exception ex) { Console.WriteLine($"[GPS] Initial fetch failed: {ex.Message}"); }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[GPS] Initial fetch warning: {ex.Message}");
+            }
         }
     }
 }

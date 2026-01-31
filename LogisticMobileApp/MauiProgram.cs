@@ -54,9 +54,11 @@ public static class MauiProgram
         builder.Services.AddTransient<DashboardViewModel>();
         builder.Services.AddTransient<DashboardPage>();
         builder.Services.AddSingleton<GpsStreamingService>();
+
 #if ANDROID
         builder.Services.AddSingleton<IDeviceHelper, DeviceHelper>();
         builder.Services.AddSingleton<IGpsListener, Platforms.Android.AndroidGpsListener>();
+        builder.Services.AddSingleton<IBackgroundService, LogisticMobileApp.Platforms.Android.AndroidBackgroundService>();
 #else
         builder.Services.AddSingleton<IDeviceHelper>(sp => throw new NotSupportedException());
 #endif
@@ -65,7 +67,6 @@ public static class MauiProgram
 #if DEBUG
         builder.Logging.AddDebug();
 #endif
-        builder.Services.AddSingleton<GpsStreamingService>();
         var app = builder.Build();
         return app;
     }

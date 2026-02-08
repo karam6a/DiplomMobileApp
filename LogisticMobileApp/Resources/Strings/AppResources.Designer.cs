@@ -430,6 +430,15 @@ namespace LogisticMobileApp.Resources.Strings {
         }
         
         /// <summary>
+        ///   Ищет локализованную строку, похожую на Я.
+        /// </summary>
+        public static string Map_MyLocationMarker {
+            get {
+                return ResourceManager.GetString("Map_MyLocationMarker", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Ищет локализованную строку, похожую на Навигация.
         /// </summary>
         public static string Map_Navigate {

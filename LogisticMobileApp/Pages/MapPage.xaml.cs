@@ -368,6 +368,9 @@ namespace LogisticMobileApp.Pages
                 // Парсим маршрут с сервера (основной маршрут между точками)
                 ParseGeometryJson();
 
+                // Обрезаем маршрут - убираем возврат к депо (если есть)
+                TrimRouteReturnToDepot();
+
                 // Строим маршрут от моего местоположения до первой точки (через OSRM)
                 await BuildRouteFromMyLocationAsync();
 
@@ -475,6 +478,15 @@ namespace LogisticMobileApp.Pages
             }
 
             System.Diagnostics.Debug.WriteLine($"[MapPage] Parsed {_markerPoints.Count} marker points from clients");
+            if (_originalMarkerPoints.Count >= 2)
+            {
+                var depot = _originalMarkerPoints[0]; // Депо
+                var firstPickup = _originalMarkerPoints[1]; // Первая точка вывоза
+                var lastPickup = _originalMarkerPoints[^1]; // Последняя точка
+                System.Diagnostics.Debug.WriteLine($"[MapPage] Depot (marker 0): X={depot.X}, Y={depot.Y}");
+                System.Diagnostics.Debug.WriteLine($"[MapPage] First pickup (marker 1): X={firstPickup.X}, Y={firstPickup.Y}");
+                System.Diagnostics.Debug.WriteLine($"[MapPage] Last marker: X={lastPickup.X}, Y={lastPickup.Y}");
+            }
         }
 
         /// <summary>
@@ -545,9 +557,31 @@ namespace LogisticMobileApp.Pages
                 return;
             }
 
+            System.Diagnostics.Debug.WriteLine($"[MapPage] ParseGeometryJson: _geometryJson length = {_geometryJson.Length}");
+            System.Diagnostics.Debug.WriteLine($"[MapPage] ParseGeometryJson: first 300 chars = {_geometryJson.Substring(0, Math.Min(300, _geometryJson.Length))}");
+
             try
             {
-                using var document = JsonDocument.Parse(_geometryJson);
+                // Проверяем, не экранирован ли JSON (двойная сериализация)
+                var jsonToParse = _geometryJson;
+                if (jsonToParse.Contains("\\\"") || jsonToParse.StartsWith("\""))
+                {
+                    // JSON экранирован - убираем экранирование
+                    // Сначала убираем внешние кавычки если есть
+                    if (jsonToParse.StartsWith("\"") && jsonToParse.EndsWith("\""))
+                    {
+                        jsonToParse = jsonToParse.Substring(1, jsonToParse.Length - 2);
+                    }
+                    // Затем убираем экранирование
+                    jsonToParse = jsonToParse
+                        .Replace("\\\"", "\"")
+                        .Replace("\\\\", "\\")
+                        .Replace("\\/", "/");
+                    System.Diagnostics.Debug.WriteLine("[MapPage] ParseGeometryJson: Unescaped JSON");
+                    System.Diagnostics.Debug.WriteLine($"[MapPage] ParseGeometryJson: first 300 chars after unescape = {jsonToParse.Substring(0, Math.Min(300, jsonToParse.Length))}");
+                }
+                
+                using var document = JsonDocument.Parse(jsonToParse);
                 var root = document.RootElement;
 
                 if (root.TryGetProperty("type", out var typeElement))
@@ -567,13 +601,31 @@ namespace LogisticMobileApp.Pages
                     }
                     else if (type == "FeatureCollection" && root.TryGetProperty("features", out var features))
                     {
+                        var featureCount = 0;
                         foreach (var feature in features.EnumerateArray())
                         {
+                            featureCount++;
                             if (feature.TryGetProperty("geometry", out var geometry))
                             {
+                                var pointsBefore = _routeLinePoints.Count;
                                 ParseGeometryElement(geometry);
+                                var pointsAdded = _routeLinePoints.Count - pointsBefore;
+                                
+                                // Логируем первую и последнюю точку каждого feature
+                                if (pointsAdded > 0)
+                                {
+                                    var featureFirst = _routeLinePoints[pointsBefore];
+                                    var featureLast = _routeLinePoints[^1];
+                                    System.Diagnostics.Debug.WriteLine($"[MapPage] Feature {featureCount}: {pointsAdded} points, first=({featureFirst.X:F2}, {featureFirst.Y:F2}), last=({featureLast.X:F2}, {featureLast.Y:F2})");
+                                    
+                                    // Берём только первый Feature - остальные могут быть дубликатами,
+                                    // которые создают прямые линии при объединении
+                                    System.Diagnostics.Debug.WriteLine($"[MapPage] Using only first feature, skipping remaining");
+                                    break;
+                                }
                             }
                         }
+                        System.Diagnostics.Debug.WriteLine($"[MapPage] Total features in FeatureCollection: {featureCount}");
                     }
                     else if (type == "Feature" && root.TryGetProperty("geometry", out var geometry))
                     {
@@ -586,6 +638,13 @@ namespace LogisticMobileApp.Pages
                 }
 
                 System.Diagnostics.Debug.WriteLine($"[MapPage] Parsed {_routeLinePoints.Count} route points from geometry");
+                if (_routeLinePoints.Count > 0)
+                {
+                    var first = _routeLinePoints[0];
+                    var last = _routeLinePoints[^1];
+                    System.Diagnostics.Debug.WriteLine($"[MapPage] Route first point: X={first.X}, Y={first.Y}");
+                    System.Diagnostics.Debug.WriteLine($"[MapPage] Route last point: X={last.X}, Y={last.Y}");
+                }
             }
             catch (Exception ex)
             {
@@ -629,11 +688,73 @@ namespace LogisticMobileApp.Pages
         }
 
         /// <summary>
+        /// Обрезает маршрут сервера, убирая участок возврата к депо.
+        /// Маршрут обрезается после точки, ближайшей к последней точке вывоза.
+        /// </summary>
+        private void TrimRouteReturnToDepot()
+        {
+            // Нужно минимум 10 точек маршрута и минимум 2 маркера (депо + хотя бы 1 точка вывоза)
+            if (_routeLinePoints.Count < 10 || _originalMarkerPoints.Count < 2)
+                return;
+
+            // Депо - первый маркер (индекс 0)
+            var depot = _originalMarkerPoints[0];
+            // Последняя точка вывоза - последний маркер
+            var lastPickup = _originalMarkerPoints[^1];
+            var lastRoutePoint = _routeLinePoints[^1];
+
+            // Расстояние от последней точки маршрута до депо
+            var lastToDepotDistance = Math.Sqrt(
+                Math.Pow(lastRoutePoint.X - depot.X, 2) +
+                Math.Pow(lastRoutePoint.Y - depot.Y, 2));
+
+            System.Diagnostics.Debug.WriteLine($"[MapPage] TrimRoute: Last route point to depot distance: {lastToDepotDistance:F2}");
+
+            // Если последняя точка маршрута близка к депо (< 10km в Spherical Mercator),
+            // значит маршрут включает возврат к депо - нужно обрезать
+            if (lastToDepotDistance < 15000)
+            {
+                // Ищем во второй половине маршрута точку ближайшую к последней точке вывоза
+                int halfIndex = _routeLinePoints.Count / 2;
+                double minDistanceToLastPickup = double.MaxValue;
+                int closestToLastPickupIndex = _routeLinePoints.Count - 1;
+
+                for (int i = halfIndex; i < _routeLinePoints.Count; i++)
+                {
+                    var routePoint = _routeLinePoints[i];
+                    var distance = Math.Sqrt(
+                        Math.Pow(routePoint.X - lastPickup.X, 2) +
+                        Math.Pow(routePoint.Y - lastPickup.Y, 2));
+
+                    if (distance < minDistanceToLastPickup)
+                    {
+                        minDistanceToLastPickup = distance;
+                        closestToLastPickupIndex = i;
+                    }
+                }
+
+                System.Diagnostics.Debug.WriteLine($"[MapPage] TrimRoute: Closest to last pickup at index {closestToLastPickupIndex}, distance: {minDistanceToLastPickup:F2}");
+
+                // Обрезаем всё после точки ближайшей к последней точке вывоза
+                if (closestToLastPickupIndex < _routeLinePoints.Count - 1)
+                {
+                    var pointsToRemove = _routeLinePoints.Count - closestToLastPickupIndex - 1;
+                    _routeLinePoints.RemoveRange(closestToLastPickupIndex + 1, pointsToRemove);
+                    System.Diagnostics.Debug.WriteLine($"[MapPage] TrimRoute: Removed {pointsToRemove} points (return to depot)");
+                }
+            }
+            else
+            {
+                System.Diagnostics.Debug.WriteLine("[MapPage] TrimRoute: Route does not return to depot, no trimming needed");
+            }
+        }
+
+        /// <summary>
         /// Строит маршрут от моего местоположения до указанной точки через OSRM
         /// </summary>
         /// <param name="toFirstUnprocessed">
         /// true - маршрут до первой необработанной точки (для навигации)
-        /// false - маршрут до первой точки из оригинального списка (для обзора всего маршрута)
+        /// false - маршрут до первой точки маршрута с сервера (для обзора всего маршрута)
         /// </param>
         private async Task BuildRouteFromMyLocationAsync(bool toFirstUnprocessed = false)
         {
@@ -674,12 +795,23 @@ namespace LogisticMobileApp.Pages
             }
             else
             {
-                // В обычном режиме: первая точка из оригинального списка
-                if (_originalClientsOrder.Count > 0)
+                // В обычном режиме: первая точка маршрута с сервера (если есть)
+                // Это обеспечивает плавное соединение с _routeLinePoints
+                if (_routeLinePoints.Count > 0)
                 {
+                    // Конвертируем из Spherical Mercator обратно в lat/lon
+                    var firstRoutePoint = _routeLinePoints[0];
+                    var (lon, lat) = SphericalMercator.ToLonLat(firstRoutePoint.X, firstRoutePoint.Y);
+                    targetPoint = (lat, lon);
+                    targetName = "Start of server route";
+                    System.Diagnostics.Debug.WriteLine($"[MapPage] Normal mode target (first point of server route): lat={lat:F6}, lon={lon:F6}");
+                }
+                else if (_originalClientsOrder.Count > 0)
+                {
+                    // Fallback: первая точка из оригинального списка
                     targetPoint = ParseCoordinates(_originalClientsOrder[0].Coordinates);
                     targetName = _originalClientsOrder[0].Name;
-                    System.Diagnostics.Debug.WriteLine($"[MapPage] Normal mode target (first original): {targetName}");
+                    System.Diagnostics.Debug.WriteLine($"[MapPage] Normal mode target (first original, fallback): {targetName}");
                 }
             }
 
@@ -735,11 +867,11 @@ namespace LogisticMobileApp.Pages
             else if (_myLocationPoint != null)
                 allPoints.Add(_myLocationPoint);
             
-            // Добавляем основной маршрут
+            // Добавляем основной маршрут (используем ОРИГИНАЛЬНЫЕ точки)
             if (_routeLinePoints.Count > 0)
                 allPoints.AddRange(_routeLinePoints);
             else
-                allPoints.AddRange(_markerPoints);
+                allPoints.AddRange(_originalMarkerPoints);
 
             if (allPoints.Count > 0)
             {
@@ -773,7 +905,7 @@ namespace LogisticMobileApp.Pages
                     // Метка "Я" внутри круга
                     new LabelStyle
                     {
-                        Text = "Я",
+                        Text = AppResources.Map_MyLocationMarker,
                         ForeColor = Color.White,
                         BackColor = new Brush(Color.Transparent),
                         Font = new Font { Size = 14, Bold = true },
@@ -794,18 +926,20 @@ namespace LogisticMobileApp.Pages
 
         private MemoryLayer? CreateMarkersLayer()
         {
-            if (_markerPoints.Count == 0)
+            // Используем ОРИГИНАЛЬНЫЕ данные для отображения маркеров (как пришли с сервера)
+            if (_originalMarkerPoints.Count == 0)
                 return null;
 
             var features = new List<IFeature>();
             
-            for (int i = 0; i < _markerPoints.Count && i < _clientsData.Count; i++)
+            for (int i = 0; i < _originalMarkerPoints.Count && i < _originalClientsOrder.Count; i++)
             {
-                var sphericalPoint = _markerPoints[i];
-                var client = _clientsData[i];
+                var sphericalPoint = _originalMarkerPoints[i];
+                var client = _originalClientsOrder[i];
 
                 var feature = new PointFeature(sphericalPoint)
                 {
+                    // Используем оригинальный индекс (i + 1)
                     Styles = CreateMarkerStyles(i + 1)
                 };
 
@@ -827,7 +961,11 @@ namespace LogisticMobileApp.Pages
         {
             var routePoints = new List<MPoint>();
 
-            // 1. Добавляем маршрут от моего местоположения до первой точки (по дорогам)
+            System.Diagnostics.Debug.WriteLine($"[MapPage] CreateRouteLayer: _routeLinePoints.Count = {_routeLinePoints.Count}");
+            System.Diagnostics.Debug.WriteLine($"[MapPage] CreateRouteLayer: _routeFromMyLocation.Count = {_routeFromMyLocation.Count}");
+            System.Diagnostics.Debug.WriteLine($"[MapPage] CreateRouteLayer: _originalMarkerPoints.Count = {_originalMarkerPoints.Count}");
+
+            // 1. Добавляем маршрут от моего местоположения до первой ОРИГИНАЛЬНОЙ точки (по дорогам)
             if (_routeFromMyLocation.Count > 0)
             {
                 routePoints.AddRange(_routeFromMyLocation);
@@ -838,21 +976,27 @@ namespace LogisticMobileApp.Pages
                 routePoints.Add(_myLocationPoint);
             }
 
-            // 2. Добавляем основной маршрут (с сервера или прямые линии)
+            // 2. Добавляем основной маршрут (с сервера или прямые линии между ОРИГИНАЛЬНЫМИ точками)
             if (_routeLinePoints.Count >= 2)
             {
-                // Маршрут с сервера - пропускаем первую точку если она уже есть
-                var startIndex = routePoints.Count > 0 ? 0 : 0;
+                // Маршрут с сервера
+                System.Diagnostics.Debug.WriteLine("[MapPage] CreateRouteLayer: Using server route (_routeLinePoints)");
                 routePoints.AddRange(_routeLinePoints);
             }
-            else if (_markerPoints.Count > 0)
+            else if (_originalMarkerPoints.Count > 0)
             {
-                // Прямые линии между клиентами
-                routePoints.AddRange(_markerPoints);
+                // Прямые линии между ОРИГИНАЛЬНЫМИ точками (в порядке с сервера)
+                System.Diagnostics.Debug.WriteLine("[MapPage] CreateRouteLayer: Using fallback (straight lines between _originalMarkerPoints)");
+                routePoints.AddRange(_originalMarkerPoints);
             }
 
+            System.Diagnostics.Debug.WriteLine($"[MapPage] CreateRouteLayer: total routePoints before cleanup = {routePoints.Count}");
+
             if (routePoints.Count < 2)
+            {
+                System.Diagnostics.Debug.WriteLine("[MapPage] CreateRouteLayer: Not enough points, returning null");
                 return null;
+            }
 
             // Удаляем дубликаты подряд идущих точек
             var cleanedPoints = new List<MPoint> { routePoints[0] };
@@ -867,8 +1011,13 @@ namespace LogisticMobileApp.Pages
                 }
             }
 
+            System.Diagnostics.Debug.WriteLine($"[MapPage] CreateRouteLayer: cleanedPoints after cleanup = {cleanedPoints.Count}");
+
             if (cleanedPoints.Count < 2)
+            {
+                System.Diagnostics.Debug.WriteLine("[MapPage] CreateRouteLayer: Not enough cleaned points, returning null");
                 return null;
+            }
 
             var coordinates = cleanedPoints
                 .Select(p => new Coordinate(p.X, p.Y))
@@ -984,10 +1133,11 @@ namespace LogisticMobileApp.Pages
             else if (_myLocationPoint != null)
                 allPoints.Add(_myLocationPoint);
             
+            // Используем ОРИГИНАЛЬНЫЕ точки для центрирования
             if (_routeLinePoints.Count > 0)
                 allPoints.AddRange(_routeLinePoints);
             else
-                allPoints.AddRange(_markerPoints);
+                allPoints.AddRange(_originalMarkerPoints);
 
             CenterMapOnAllPoints(allPoints);
         }
@@ -1241,6 +1391,9 @@ namespace LogisticMobileApp.Pages
 
         private async void DisableNavigationMode()
         {
+            System.Diagnostics.Debug.WriteLine("[MapPage] DisableNavigationMode called");
+            System.Diagnostics.Debug.WriteLine($"[MapPage] Before disable: _routeLinePoints.Count = {_routeLinePoints.Count}");
+            
             _isNavigationMode = false;
             _isTurnsListExpanded = false;
             
@@ -1271,7 +1424,10 @@ namespace LogisticMobileApp.Pages
             // Восстанавливаем полный список точек
             await PopulateRoutePointsListAsync();
             
-            // Возвращаем полный маршрут
+            // Перестраиваем маршрут от местоположения до первой ОРИГИНАЛЬНОЙ точки
+            await BuildRouteFromMyLocationAsync(toFirstUnprocessed: false);
+            
+            // Возвращаем полный маршрут (с оригинальными данными)
             UpdateMapLayers();
         }
 
@@ -1867,6 +2023,11 @@ namespace LogisticMobileApp.Pages
         {
             if (_map == null) return;
 
+            System.Diagnostics.Debug.WriteLine($"[MapPage] UpdateMapLayers called");
+            System.Diagnostics.Debug.WriteLine($"[MapPage] UpdateMapLayers: _routeLinePoints.Count = {_routeLinePoints.Count}");
+            System.Diagnostics.Debug.WriteLine($"[MapPage] UpdateMapLayers: _routeFromMyLocation.Count = {_routeFromMyLocation.Count}");
+            System.Diagnostics.Debug.WriteLine($"[MapPage] UpdateMapLayers: _originalMarkerPoints.Count = {_originalMarkerPoints.Count}");
+
             // Удаляем ВСЕ слои кроме тайлов (MemoryLayer - это наши слои, тайлы - другой тип)
             var layersToRemove = _map.Layers.Where(l => l is MemoryLayer).ToList();
             foreach (var layer in layersToRemove)
@@ -1879,6 +2040,11 @@ namespace LogisticMobileApp.Pages
             if (routeLayer != null)
             {
                 _map.Layers.Add(routeLayer);
+                System.Diagnostics.Debug.WriteLine("[MapPage] UpdateMapLayers: Route layer added");
+            }
+            else
+            {
+                System.Diagnostics.Debug.WriteLine("[MapPage] UpdateMapLayers: Route layer is NULL!");
             }
 
             // Добавляем слой с маркерами клиентов
@@ -2115,3 +2281,4 @@ namespace LogisticMobileApp.Pages
 
     }
 }
+ 

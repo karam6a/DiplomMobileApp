@@ -133,10 +133,10 @@
     <value>Подтвердите пароль</value>
   </data>
   <data name="ConfirmRoute_CommentPlaceholder" xml:space="preserve">
-    <value>Комментарий</value>
+    <value>Введите комментарий...</value>
   </data>
   <data name="ConfirmRoute_ConfirmButton" xml:space="preserve">
-    <value>Подтвердить сбор</value>
+    <value>Подтвердить</value>
   </data>
   <data name="ConfirmRoute_ContainersLabel" xml:space="preserve">
     <value>Контейнеров:</value>
@@ -145,13 +145,13 @@
     <value>Завершить маршрут</value>
   </data>
   <data name="ConfirmRoute_RejectButton" xml:space="preserve">
-    <value>В сборе отказано</value>
+    <value>Отказ</value>
   </data>
   <data name="ConfirmRoute_SendComment" xml:space="preserve">
     <value>Отправить</value>
   </data>
   <data name="ConfirmRoute_Title" xml:space="preserve">
-    <value>Подтверждение точек</value>
+    <value>Подтверждение</value>
   </data>
   <data name="ContinueButtonText" xml:space="preserve">
     <value>Продолжить</value>
@@ -333,27 +333,6 @@
   <data name="Dashboard_NoRouteMessage" xml:space="preserve">
     <value>В данный момент маршрута нет. Обратитесь к логисту.</value>
   </data>
-  <data name="ConfirmRoute_Title" xml:space="preserve">
-    <value>Подтверждение</value>
-  </data>
-  <data name="ConfirmRoute_ContainersLabel" xml:space="preserve">
-    <value>Контейнеров:</value>
-  </data>
-  <data name="ConfirmRoute_ConfirmButton" xml:space="preserve">
-    <value>Подтвердить</value>
-  </data>
-  <data name="ConfirmRoute_RejectButton" xml:space="preserve">
-    <value>Отказ</value>
-  </data>
-  <data name="ConfirmRoute_CommentPlaceholder" xml:space="preserve">
-    <value>Введите комментарий...</value>
-  </data>
-  <data name="ConfirmRoute_SendComment" xml:space="preserve">
-    <value>Отправить</value>
-  </data>
-  <data name="ConfirmRoute_FinishRouteButton" xml:space="preserve">
-    <value>Завершить маршрут</value>
-  </data>
   <data name="ConfirmRoute_StatusConfirmed" xml:space="preserve">
     <value>Подтверждено</value>
   </data>
@@ -362,5 +341,8 @@
   </data>
   <data name="ConfirmRoute_CancelButton" xml:space="preserve">
     <value>Отмена</value>
+  </data>
+  <data name="Map_MyLocationMarker" xml:space="preserve">
+    <value>Я</value>
   </data>
 </root>

@@ -342,4 +342,7 @@
   <data name="ConfirmRoute_CancelButton" xml:space="preserve">
     <value>Cancel</value>
   </data>
+  <data name="Map_MyLocationMarker" xml:space="preserve">
+    <value>I</value>
+  </data>
 </root>

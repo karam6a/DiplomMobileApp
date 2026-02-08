@@ -310,8 +310,8 @@ namespace LogisticMobileApp.Pages
                 await _hubService.StopAsync(); // Если у вас есть метод Stop/Disconnect
 
                 // 4. Очищаем данные пользователя (чтобы при следующем запуске потребовался логин)
-                Preferences.Clear();
-                SecureStorage.Default.RemoveAll();
+                //Preferences.Clear();
+                //SecureStorage.Default.RemoveAll();
 
                 // 5. Небольшая пауза (500мс), чтобы Android успел обработать Intent остановки сервиса
                 // перед тем, как мы жестко убьем процесс. Без этого уведомление может остаться висеть.

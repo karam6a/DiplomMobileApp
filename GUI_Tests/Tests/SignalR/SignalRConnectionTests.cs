@@ -1,27 +1,16 @@
 namespace GUI_Tests.Tests.SignalR;
 
-/// <summary>
-/// Тесты для SignalR соединения (RouteHubService)
-/// 
-/// ВАЖНО: Эти тесты проверяют реальное подключение к серверу.
-/// Для их работы:
-/// 1. Сервер должен быть запущен и доступен
-/// 2. Нужен валидный access_token в SecureStorage (или отключить авторизацию на сервере для тестов)
-/// 
-/// Если сервер недоступен - тесты будут пропущены (не fail).
-/// </summary>
+
 public class SignalRConnectionTests
 {
-    // URL вашего SignalR хаба (тот же что в RouteHubService)
     private const string HubUrl = "https://esme-aspiratory-september.ngrok-free.dev/hubs/notifications";
     
-    // Таймаут подключения
     private static readonly TimeSpan ConnectionTimeout = TimeSpan.FromSeconds(10);
 
     [Fact]
     public async Task SignalR_ServerUrl_ShouldBeReachable()
     {
-        // Arrange
+
         using var httpClient = new HttpClient();
         httpClient.Timeout = ConnectionTimeout;
         
@@ -85,9 +74,8 @@ public class SignalRConnectionTests
         Assert.Equal(string.Empty, dto.Address);
     }
 
-    /// <summary>
     /// Локальная копия DTO для тестов (чтобы не зависеть от основного проекта)
-    /// </summary>
+ 
     public class RouteUpdatedDto
     {
         public string Name { get; set; } = string.Empty;

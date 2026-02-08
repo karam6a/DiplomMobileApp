@@ -52,7 +52,7 @@ namespace LogisticMobileApp.Pages
             {
                 if (IsConfirmed) return Microsoft.Maui.Graphics.Color.FromArgb("#4CAF50");
                 if (IsRejected) return Microsoft.Maui.Graphics.Color.FromArgb("#D32F2F");
-                return Microsoft.Maui.Graphics.Color.FromArgb("#D32F2F"); // Default red
+                return Microsoft.Maui.Graphics.Color.FromArgb("#D32F2F"); 
             }
         }
 
@@ -1401,7 +1401,7 @@ namespace LogisticMobileApp.Pages
 
             try
             {
-                // Отправляем на сервер
+                // Отправляем комментарий на сервер
                 await _apiService.AddNoteAsync(client.Id, comment);
                 
                 // Показываем уведомление
@@ -1409,7 +1409,7 @@ namespace LogisticMobileApp.Pages
                     .Make($"✗ {client.Name}", CommunityToolkit.Maui.Core.ToastDuration.Short)
                     .Show();
                 
-                // Обрабатываем точку и переходим к следующей
+                // Обрабатываем точку и переходим к следующей (статус отправится в ProcessPointAndMoveToNext)
                 await ProcessPointAndMoveToNext(isConfirmed: false, comment);
             }
             catch (Exception ex)
@@ -1439,6 +1439,16 @@ namespace LogisticMobileApp.Pages
                 await CommunityToolkit.Maui.Alerts.Toast
                     .Make($"✓ {item.Name}", CommunityToolkit.Maui.Core.ToastDuration.Short)
                     .Show();
+
+                // Отправляем статус на сервер
+                try
+                {
+                    await _apiService.UpdateProcessingStatusAsync(client.Id, true);
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[MapPage] Failed to update processing status on server: {ex.Message}");
+                }
 
                 // Сохраняем статус локально
                 await _pickUpStatusService.ConfirmAsync(client.Id, _routeId);
@@ -1488,8 +1498,11 @@ namespace LogisticMobileApp.Pages
 
                 try
                 {
-                    // Отправляем на сервер
+                    // Отправляем комментарий на сервер
                     await _apiService.AddNoteAsync(client.Id, comment);
+                    
+                    // Отправляем статус на сервер (отклонено = false)
+                    await _apiService.UpdateProcessingStatusAsync(client.Id, false);
 
                     // Показываем уведомление
                     await CommunityToolkit.Maui.Alerts.Toast
@@ -1944,6 +1957,17 @@ namespace LogisticMobileApp.Pages
                 return;
 
             var client = _clientsData[0];
+            
+            // Отправляем статус на сервер
+            try
+            {
+                await _apiService.UpdateProcessingStatusAsync(client.Id, isConfirmed);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[MapPage] Failed to update processing status on server: {ex.Message}");
+                // Продолжаем работу даже если сервер недоступен
+            }
             
             // Сохраняем статус локально
             if (isConfirmed)

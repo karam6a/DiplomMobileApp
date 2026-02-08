@@ -14,6 +14,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GUI_Tests", "GUI_Tests\GUI_
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Backend_ApiTests", "..\Backend_ApiTests\Backend_ApiTests\Backend_ApiTests.csproj", "{8D181C12-707A-3176-EF4B-2F30C5C4D383}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SeleniumLab1", "..\..\..\Downloads\Telegram Desktop\SeleniumLab\SeleniumLab1\SeleniumLab1\SeleniumLab1.csproj", "{5491604B-6C57-ECE1-45EF-719A3D58D170}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SeleniumLab2", "..\..\..\Downloads\Telegram Desktop\SeleniumLab\SeleniumLab1\SeleniumLab2\SeleniumLab2.csproj", "{C92122A9-EE83-0E99-AD9E-8BDDE431A7FF}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -34,6 +38,14 @@ Global
 		{8D181C12-707A-3176-EF4B-2F30C5C4D383}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8D181C12-707A-3176-EF4B-2F30C5C4D383}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8D181C12-707A-3176-EF4B-2F30C5C4D383}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5491604B-6C57-ECE1-45EF-719A3D58D170}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5491604B-6C57-ECE1-45EF-719A3D58D170}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5491604B-6C57-ECE1-45EF-719A3D58D170}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5491604B-6C57-ECE1-45EF-719A3D58D170}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C92122A9-EE83-0E99-AD9E-8BDDE431A7FF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C92122A9-EE83-0E99-AD9E-8BDDE431A7FF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C92122A9-EE83-0E99-AD9E-8BDDE431A7FF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C92122A9-EE83-0E99-AD9E-8BDDE431A7FF}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

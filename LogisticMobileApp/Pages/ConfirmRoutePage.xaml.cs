@@ -41,6 +41,16 @@ namespace LogisticMobileApp.Pages
                 stop.IsRejected = false;
                 stop.Comment = string.Empty;
                 
+                // Отправляем статус на сервер
+                try
+                {
+                    await _apiService.UpdateProcessingStatusAsync(stop.Id, true);
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[ConfirmRoutePage] Failed to update processing status: {ex.Message}");
+                }
+                
                 // Сохраняем статус локально
                 await _pickUpStatusService.ConfirmAsync(stop.Id, _routeId);
                 
@@ -54,7 +64,7 @@ namespace LogisticMobileApp.Pages
                 stop.IsRejected = true;
                 stop.IsConfirmed = false;
                 
-                // Сохраняем статус локально
+                // Сохраняем статус локально (статус на сервер отправится при SendCommentCommand)
                 await _pickUpStatusService.RejectAsync(stop.Id, _routeId, stop.Comment);
             });
 
@@ -64,9 +74,13 @@ namespace LogisticMobileApp.Pages
 
                 try
                 {
+                    // Отправляем комментарий
                     var result = await _apiService.AddNoteAsync(stop.Id, stop.Comment ?? string.Empty);
                     if (result)
                     {
+                        // Отправляем статус на сервер (отклонено = false)
+                        await _apiService.UpdateProcessingStatusAsync(stop.Id, false);
+                        
                         // Обновляем локальный статус с комментарием
                         await _pickUpStatusService.RejectAsync(stop.Id, _routeId, stop.Comment);
                         

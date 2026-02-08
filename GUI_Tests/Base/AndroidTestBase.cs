@@ -14,10 +14,8 @@ public abstract class AndroidTestBase : IDisposable
     // URL Appium сервера
     private const string AppiumServerUrl = "http://127.0.0.1:4723/";
     
-    // Package name вашего приложения (найдите в AndroidManifest.xml или LogisticMobileApp.csproj)
+
     private const string AppPackage = "com.companyname.logisticmobileapp";
-    
-    // Activity которая запускается (для MAUI обычно это)
     private const string AppActivity = "crc64e1fb321c08285b90.MainActivity";
 
     protected AndroidTestBase()
